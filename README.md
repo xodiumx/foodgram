@@ -1,1 +1,1 @@
-# foodgram
+# praktikum_new_diplom
