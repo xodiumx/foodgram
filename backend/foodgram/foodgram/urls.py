@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.urls import path, re_path
+from django.urls import path, re_path, include
 
 from django.views.generic import TemplateView
 from drf_yasg import openapi
@@ -9,6 +9,7 @@ from rest_framework.permissions import AllowAny
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include('users.urls')),
     path(
         'redoc/',
         TemplateView.as_view(template_name='redoc.html'),
@@ -18,10 +19,10 @@ urlpatterns = [
 
 schema_view = get_schema_view(
     openapi.Info(
-        title="Yatube API",
+        title="Foodgram API",
         default_version='v1',
-        description="Документация для приложения Yambd",
-        contact=openapi.Contact(email="yamdb17@gmail.com"),
+        description="Документация для приложения foodgram",
+        contact=openapi.Contact(email="foodgram@gmail.com"),
         license=openapi.License(name="BSD License"),
     ),
     public=True,
