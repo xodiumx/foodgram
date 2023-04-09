@@ -210,3 +210,12 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+AMOUNT_CHOICES = (
+    ('Integers', 
+        [(i, i) for i in range(0, 101)],
+    ),
+    ('Floats',
+        [(i, i / 100) for i in range(0, 101, 1)]
+    ),
+)

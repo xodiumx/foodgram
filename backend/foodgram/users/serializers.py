@@ -6,7 +6,7 @@ from rest_framework.validators import UniqueTogetherValidator
 from rest_framework.serializers import (
     CharField, EmailField, ModelSerializer,
     Serializer, SlugRelatedField, 
-    CurrentUserDefault,)
+    CurrentUserDefault, Field)
 
 from .models import User, Follow
 from .utils import get_tokens_for_user
