@@ -40,8 +40,6 @@ class UserViewSet(BaseUserViewSet):
     permission_classes = (AllowAny,)
     pagination_class = LimitOffsetPagination
     lookup_field = 'id'
-    #filter_backends = (SearchFilter,)
-    #search_fields = ('username',)
 
     @action(
         methods=('GET',),
@@ -88,13 +86,7 @@ class UserViewSet(BaseUserViewSet):
     def subscribe(self, request):
         ...
 
-
-    # def get_serializer_class(self):
-    #     if self.action == 'create': return SignupSerializer
-    #     elif self.action == 'retrieve': return InfoSerializer
-    #     elif self.action == 'list': return InfoSerializer
-        
-    
+  
 class LoginViewset(TokenObtainPairView):
     
     serializer_class = LoginSerializer
@@ -112,23 +104,4 @@ class LogoutViewset(APIView):
         refresh_token = RefreshToken(tokens[-1].token)
         refresh_token.blacklist()
         return Response(status=HTTP_204_NO_CONTENT)
-
-
-
-# class FollowViewSet(CreateModelMixin,
-#                     DestroyModelMixin,
-#                     GenericViewSet):
-    
-#     serializer_class = FollowSerializer
-#     http_method_names = ('post', 'delete')
-#     permission_classes = (UserIsAuthenticated)
-#     filter_backends = (SearchFilter,)
-#     search_fields = ('following__username',)
-#     lookup_field = None
-
-#     def get_queryset(self):
-#         return get_object_or_404(User, pk=self.request.user.id).follower
-
-#     def perform_create(self, serializer):
-#         serializer.save(user=self.request.user)
     
