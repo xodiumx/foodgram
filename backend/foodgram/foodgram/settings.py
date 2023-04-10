@@ -23,6 +23,7 @@ ALLOWED_HOSTS = ['*']
 INSTALLED_APPS = [
     'api',
     'drf_yasg',
+    'django_filters',
     'users',
     'recipes',
     'rest_framework_simplejwt',

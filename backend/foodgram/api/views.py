@@ -11,13 +11,14 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-
+from django_filters.rest_framework import DjangoFilterBackend
 
 from django.shortcuts import get_list_or_404
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
-from recipes.models import Tag
-from .serializers import TagSerializer
+from recipes.models import Tag, Ingredient
+from .serializers import TagSerializer, IngredientSerializer
+from .filters import SearchByName, IngredientFilter
 
 class BaseUserViewSet(CreateModelMixin,
                       ListModelMixin,
@@ -35,3 +36,17 @@ class TagViewSet(ListModelMixin,
     http_method_names =('get',)
     pagination_class = None
     queryset = Tag.objects.all()
+
+
+
+class IngredientViewSet(
+    ListModelMixin,
+    RetrieveModelMixin,
+    GenericViewSet,):
+    
+    serializer_class = IngredientSerializer
+    http_method_names =('get',)
+    pagination_class = None
+    queryset = Ingredient.objects.all()
+    filter_backends = (DjangoFilterBackend, )
+    filterset_class = IngredientFilter
