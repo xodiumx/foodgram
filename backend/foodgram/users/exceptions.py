@@ -5,5 +5,5 @@ class WrongData(ValidationError):
     ...
 
 
-class CantSubscribeToYourSelf(ValidationError):
+class CantSubscribe(ValidationError):
     ...

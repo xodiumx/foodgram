@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from .exceptions import CantSubscribe
 
 class User(AbstractUser):
     """
@@ -46,24 +47,44 @@ class User(AbstractUser):
         return self.username
 
 
-
 class Follow(models.Model):
-    ...
-#     user = models.ForeignKey(
-#         User,
-#         on_delete=models.CASCADE,
-#         related_name='follower',
-#     )
-#     following = models.ForeignKey(
-#         User,
-#         on_delete=models.CASCADE,
-#         related_name='following',
-#     )
+    """
+    Модель для подписок.
+    Attributes:
+        user: текущий user.
+        following: на кого подписываются.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='follower',
+    )
+    following = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='following',
+    )
 
-#     class Meta:
-#         constraints = [
-#             models.UniqueConstraint(
-#                 fields=('following', 'user'),
-#                 name='unique_user_following'
-#             )
-#         ]
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('following', 'user'),
+                name='unique_user_following',
+                violation_error_message='Повторная подписка',
+            )
+        ]
+    
+    def clean(self):
+        """Валидация повторной подписки и подписки на себя."""
+        if self.user == self.following:
+            raise CantSubscribe(
+                {'detail': 'Нельзя подписаться на себя'})
+        
+        if Follow.objects.filter(user=self.user,
+                                 following=self.following).exists():
+            raise CantSubscribe(
+                {'detail': 'Нельзя подписаться повторно'})
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super(Follow, self).save(*args, **kwargs)

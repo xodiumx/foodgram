@@ -1,17 +1,15 @@
-from re import match
-
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
-from rest_framework.validators import UniqueTogetherValidator
+
 from rest_framework.serializers import (
     CharField, EmailField, ModelSerializer,
     Serializer, SlugRelatedField, 
     CurrentUserDefault, Field)
 
-from .models import User, Follow
+from .models import User
 from .utils import get_tokens_for_user
-from .exceptions import WrongData, CantSubscribeToYourSelf
-
+from .exceptions import WrongData
 
 
 class InfoSerializer(ModelSerializer):
@@ -41,6 +39,8 @@ class LoginSerializer(Serializer):
         user = get_object_or_404(User, email=data.get('email'))
         if not check_password(data.get('password'), user.password):
             raise WrongData('Введены не правильные данные')
+        user.last_login = timezone.now()
+        user.save()
         return {'auth_token': get_tokens_for_user(user).get('access')}
     
 
@@ -55,37 +55,4 @@ class ChangePasswordSerializer(Serializer):
             raise WrongData('Введен не правильный пароль')
         user.set_password(data.get('new_password'))
         user.save()
-        return data
-    
-
-class FollowSerializer(ModelSerializer):
-    user = SlugRelatedField(
-        slug_field='username',
-        default=CurrentUserDefault(),
-        read_only=True,
-    )
-    following = SlugRelatedField(
-        slug_field='username',
-        queryset=User.objects.all(),
-    )
-
-    class Meta:
-        fields = ('user', 'following',)
-        read_only_fields = ('user',)
-        model = Follow
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Follow.objects.all(),
-                fields=('user', 'following',),
-                message='Вы не можете подписаться повторно!',
-            )
-        ]
-
-    def validate(self, data):
-        user = self.context['request'].user
-        following = data['following']
-
-        if user == following:
-            raise CantSubscribeToYourSelf(
-                {'detail': 'Вы не можете подписаться на себя'})
         return data
