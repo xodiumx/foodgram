@@ -32,21 +32,20 @@ class TagViewSet(ListModelMixin,
                  RetrieveModelMixin,
                  GenericViewSet,):
     
-    serializer_class = TagSerializer
-    http_method_names =('get',)
     pagination_class = None
+    http_method_names =('get',)
     queryset = Tag.objects.all()
-
-
+    serializer_class = TagSerializer
+    
 
 class IngredientViewSet(
     ListModelMixin,
     RetrieveModelMixin,
     GenericViewSet,):
-    
-    serializer_class = IngredientSerializer
-    http_method_names =('get',)
+
     pagination_class = None
+    http_method_names =('get',)
     queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
     filter_backends = (DjangoFilterBackend, )
     filterset_class = IngredientFilter
