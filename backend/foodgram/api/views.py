@@ -18,7 +18,7 @@ from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
 from recipes.models import Tag, Ingredient
 from .serializers import TagSerializer, IngredientSerializer
-from .filters import SearchByName, IngredientFilter
+from .filters import IngredientFilter
 
 class BaseUserViewSet(CreateModelMixin,
                       ListModelMixin,

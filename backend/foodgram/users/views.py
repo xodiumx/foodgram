@@ -1,3 +1,6 @@
+from django.shortcuts import get_list_or_404, get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import (
@@ -13,7 +16,9 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
+from recipes.models import Recipe
 from .models import User, Follow
 from .permissions import UserIsAuthenticated
 from .serializers import (
@@ -22,9 +27,8 @@ from .serializers import (
         LoginSerializer,
         ChangePasswordSerializer,)
 
-from django.shortcuts import get_list_or_404, get_object_or_404
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
-
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 class BaseUserViewSet(CreateModelMixin,
                       ListModelMixin,
@@ -36,7 +40,6 @@ class BaseUserViewSet(CreateModelMixin,
 
 class UserViewSet(BaseUserViewSet):
     queryset = User.objects.all()
-    serializer_class = SignupSerializer
     http_method_names = ('get', 'post', 'delete')
     permission_classes = (AllowAny,)
     pagination_class = LimitOffsetPagination
@@ -69,22 +72,67 @@ class UserViewSet(BaseUserViewSet):
         serializer.is_valid(raise_exception=True)
         return Response(status=HTTP_204_NO_CONTENT)
     
+    @swagger_auto_schema(
+        method = 'post',
+        manual_parameters=[
+            openapi.Parameter(
+                name='recipes_limit',
+                in_=openapi.IN_QUERY,
+                type='integer',
+                required=False,
+                description='how many recipes will be in request'
+            )
+        ],)
     @action(
         detail=False,
         methods=('POST', 'DELETE'),
         url_path='(?P<id>\d+)/subscribe',
-        permission_classes=(UserIsAuthenticated,),)
+        permission_classes=(UserIsAuthenticated, ),)
     def subscribe(self, request, id):
+        """
+        Action for subscribing:
+            - Если POST запрос берем пользователя на которого подписываемся
+              по id из url-a, если был передан query parametr limit
+              присваиваем его переменной limit.
+
+              Создаем запись в таблице Follow.
+              Создаем context, который будет передан в успешном ответе.
+              context['recipes'] создаем список из рецептов пользователя,
+              на которого подписываемся, если был передан query param - limit,
+              берем только limit - объектов иначе 1.
+            
+            - Если DELETE запрос берем объект из таблицы Follow, 
+              отфильтрованный, по текущему user-у и following-у и удаляем его.
+        """
         context = {}
+        current_user = request.user
         following = get_object_or_404(User, id=id)
+        limit = int(request.query_params.get('recipes_limit', 1))
+
         if request.method == 'POST':
-            Follow.objects.create(user=request.user, following=following)
+            Follow.objects.create(user=current_user, following=following)
             context['email'] = following.email
             context['id'] = following.id
             context['username'] = following.username
             context['first_name'] = following.first_name
             context['last_name'] = following.last_name
+            context['is_subscribed'] = Follow.objects.filter(
+                user=request.user, following=following).exists()
+            context['recipes'] = [{
+                'id': recipe.id, 
+                'name': recipe.name,
+                'image': recipe.image.url,
+                'cooking_time': recipe.cooking_time,
+                } for recipe in following.recipes.all()[:limit]]
+            context['recipes_count'] = limit
             return Response(context, status=HTTP_201_CREATED)
+        
+        elif request.method == 'DELETE':
+            get_object_or_404(
+                Follow, 
+                user=current_user, following=following).delete()
+            return Response(status=HTTP_204_NO_CONTENT)
+        
 
     @action(
         detail=False,
@@ -118,4 +166,3 @@ class LogoutViewset(APIView):
         refresh_token = RefreshToken(tokens[-1].token)
         refresh_token.blacklist()
         return Response(status=HTTP_204_NO_CONTENT)
-    
