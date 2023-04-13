@@ -123,6 +123,7 @@ class Recipe(models.Model):
         auto_now_add=True
     )
 
+    # TODO Убрать created сделать по -id
     class Meta:
         ordering = ('-created',)
         verbose_name = 'Рецепт'

@@ -3,11 +3,13 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
 
 from rest_framework.serializers import (
-    CharField, EmailField, ModelSerializer,
+    CharField, EmailField, ModelSerializer, ListSerializer,
     Serializer, SlugRelatedField, 
     CurrentUserDefault, Field)
 
-from .models import User
+
+from recipes.models import Recipe
+from .models import User, Follow
 from .utils import get_tokens_for_user
 from .exceptions import WrongData
 
@@ -56,3 +58,43 @@ class ChangePasswordSerializer(Serializer):
         user.set_password(data.get('new_password'))
         user.save()
         return data
+
+
+class RecipeSerializer(ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class SubInfoSerializer(ModelSerializer):
+
+    recipes = RecipeSerializer(read_only=True, many=True)
+
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name', 'last_name', 
+                  'recipes')
+
+    def to_representation(self, instance):
+        """
+        Добавляем поля is_subscribed, recipes_count в запрос и ограничиваем
+        вывод рецептов исходя из переданного лимита.
+        """
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+
+        limit = request.query_params.get('recipes_limit')
+        if limit:
+            data['recipes'] = data['recipes'][:int(limit)]
+
+        user = request.user
+        data['is_subscribed'] = Follow.objects.filter(
+            user=user, following=instance).exists()
+        data['recipes_count'] = len(data['recipes'])
+        return data
+    
+
+class SubscriptionSerializer(ListSerializer):
+
+    child = SubInfoSerializer()
