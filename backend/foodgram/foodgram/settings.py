@@ -118,10 +118,14 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
     ],
 
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 5,
-
 }
+
+# Celery
+
+CELERY_BROKER_URL = 'redis://127.0.0.1:14000/0'
+CELERY_RESULT_BACKEND = 'redis://127.0.0.1:14000/0'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 60
 
 # JWT
 

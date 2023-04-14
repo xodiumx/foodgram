@@ -165,6 +165,11 @@ class LoginViewset(TokenObtainPairView):
     http_method_names = ('post',)
     serializer_class = LoginSerializer
     
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data, 
+                        status=HTTP_201_CREATED)
 
 class LogoutViewset(APIView):
     """
@@ -174,8 +179,6 @@ class LogoutViewset(APIView):
 
     При logout-e достаем refresh-token-ы пользователя из таблицы
     OutstandingToken и заносим последний в blacklist
-
-    : TODO : удаление expired tokens из таблицы
     """
     http_method_names = ('post',)
     permission_classes = (UserIsAuthenticated,)
