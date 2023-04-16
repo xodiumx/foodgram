@@ -60,7 +60,7 @@ class ChangePasswordSerializer(Serializer):
         return data
 
 
-class RecipeSerializer(ModelSerializer):
+class RecipeInfoSerializer(ModelSerializer):
 
     class Meta:
         model = Recipe
@@ -69,7 +69,7 @@ class RecipeSerializer(ModelSerializer):
 
 class SubInfoSerializer(ModelSerializer):
 
-    recipes = RecipeSerializer(read_only=True, many=True)
+    recipes = RecipeInfoSerializer(read_only=True, many=True)
 
     class Meta:
         model = User

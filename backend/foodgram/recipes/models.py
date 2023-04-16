@@ -47,10 +47,6 @@ class Ingredient(models.Model):
         db_index=True,
         null=False,
         blank=False)
-    amount = models.IntegerField(
-        'Количество',
-        default=0,
-        choices=AMOUNT_CHOICES)
     measurement_unit = models.CharField(
         'Ед. измерения',
         max_length=20,
@@ -107,7 +103,8 @@ class Recipe(models.Model):
         Ingredient,
         blank=False,
         related_name='recipes',
-        verbose_name='Ингредиенты')
+        verbose_name='Ингредиенты',
+        through='AmountIngredient',)
     tags = models.ManyToManyField(
         Tag,
         blank=False,
@@ -131,3 +128,9 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class AmountIngredient(models.Model):
+    ingredient = models.ForeignKey(Ingredient, on_delete=models.PROTECT)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    amount = models.IntegerField(default=1)

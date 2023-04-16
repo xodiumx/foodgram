@@ -9,28 +9,18 @@ from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
 from django_filters.rest_framework import DjangoFilterBackend
 
 from django.shortcuts import get_list_or_404
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
-from recipes.models import Tag, Ingredient
-from .serializers import TagSerializer, IngredientSerializer
-from .filters import IngredientFilter
-
-class BaseUserViewSet(CreateModelMixin,
-                      ListModelMixin,
-                      RetrieveModelMixin,
-                      GenericViewSet,):
-    """Базовый ViewSet-для реализации CRUD."""
-    ...
+from foodgram.pagination  import PagePaginationWithLimit
+from recipes.models import Tag, Ingredient, Recipe, AmountIngredient
+from .serializers import (
+    TagSerializer, IngredientInfoSerializer, RecipeSerializer,)
+from .filters import IngredientFilter, RecipeFilter
 
 
-class TagViewSet(ListModelMixin,
-                 RetrieveModelMixin,
-                 GenericViewSet,):
+class TagViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet,):
     
     pagination_class = None
     http_method_names =('get',)
@@ -38,14 +28,25 @@ class TagViewSet(ListModelMixin,
     serializer_class = TagSerializer
     
 
-class IngredientViewSet(
-    ListModelMixin,
-    RetrieveModelMixin,
-    GenericViewSet,):
+class IngredientViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet,):
 
     pagination_class = None
     http_method_names =('get',)
     queryset = Ingredient.objects.all()
-    serializer_class = IngredientSerializer
+    serializer_class = IngredientInfoSerializer
     filter_backends = (DjangoFilterBackend, )
     filterset_class = IngredientFilter
+
+
+class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
+                    DestroyModelMixin, UpdateModelMixin, GenericViewSet):
+    
+    queryset = Recipe.objects.prefetch_related(
+        'ingredients__amountingredient_set').all()
+    pagination_class = PagePaginationWithLimit
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
+    http_method_names = ('get', 'post', 'patch', 'delete')
+    
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'): return RecipeSerializer

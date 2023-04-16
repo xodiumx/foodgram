@@ -1,6 +1,13 @@
-from django.contrib.admin import ModelAdmin, register
+from django.contrib.admin import ModelAdmin, StackedInline, register
 
-from .models import Ingredient, Recipe, Tag
+from .models import Ingredient, Recipe, Tag, AmountIngredient
+
+
+class IngredientInline(StackedInline):
+    model = AmountIngredient
+    extra = 5
+    verbose_name = 'Ингредиент'
+    verbose_name_plural = 'Ингредиенты'
 
 
 @register(Ingredient)
@@ -8,8 +15,7 @@ class IngredientAdmin(ModelAdmin):
     """
     """
     list_display = (
-        'name',
-        'amount',  
+        'name',  
     )
     search_fields = ('name',)
     list_filter = ('name',)
@@ -20,6 +26,7 @@ class IngredientAdmin(ModelAdmin):
 class RecipeAdmin(ModelAdmin):
     """
     """
+    inlines = (IngredientInline,)
     list_display = (
         'name', 
     )
@@ -38,3 +45,10 @@ class TagAdmin(ModelAdmin):
     search_fields = ('name',)
     list_filter = ('name',)
     empty_value_display = '-пусто-'
+
+
+@register(AmountIngredient)
+class AmountIngredientAdmin(ModelAdmin):
+    list_display = (
+        'ingredient', 
+    )

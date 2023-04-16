@@ -5,7 +5,6 @@ from django.shortcuts import get_list_or_404, get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.mixins import (
     CreateModelMixin, ListModelMixin, RetrieveModelMixin,)
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT,)
@@ -16,6 +15,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
+from foodgram.pagination  import PagePaginationWithLimit
 from .models import User, Follow
 from .permissions import UserIsAuthenticated
 from .serializers import (
@@ -35,7 +35,7 @@ class UserViewSet(CreateModelMixin,
     lookup_field = 'id'
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
-    pagination_class = LimitOffsetPagination
+    pagination_class = PagePaginationWithLimit
     http_method_names = ('get', 'post', 'delete')
 
     @action(
