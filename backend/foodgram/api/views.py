@@ -1,3 +1,7 @@
+from django.http import HttpResponse
+from django.shortcuts import get_list_or_404, get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
@@ -5,22 +9,21 @@ from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    UpdateModelMixin)
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from rest_framework.response import Response
-from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
+from rest_framework.status import (
+    HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT)
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny
-from django_filters.rest_framework import DjangoFilterBackend
-
-from django.shortcuts import get_list_or_404, get_object_or_404
 
 from foodgram.pagination  import PagePaginationWithLimit
+from users.models import User
 from recipes.models import Tag, Ingredient, Recipe, ShoppingCart, Favorite
 from .serializers import (
     TagSerializer, IngredientInfoSerializer, RecipeSerializer,
-    RecipeCreateSerializer, RecipeShortSerializer,)
+    RecipeCreateSerializer, RecipeShortSerializer, AmountIngredientSerializer)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import UserIsAuthenticated
-
+from .utils import get_shopping_cart
 
 class TagViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet,):
     
@@ -50,15 +53,21 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
     filterset_class = RecipeFilter
     http_method_names = ('get', 'post', 'patch', 'delete')
 
-
     @action(
         methods=('GET',),
         detail=False,
-        permission_classes=(UserIsAuthenticated,),
-        url_path='download_shopping_cart',)
+        filter_backends=None,
+        pagination_class=None,
+        url_path='download_shopping_cart',
+        permission_classes=(UserIsAuthenticated,),)
     def download_shopping_cart(self, request):
-        ...
-    
+        # TODO: возможность распечатки нескольких рецептов и объединение ингредиентов
+        user = get_object_or_404(User, id=request.user.id)
+        queryset = ShoppingCart.objects.select_related('recipe').filter(user=user)
+        data = queryset[0].recipe.ingredients.all().values(
+            'name', 'measurement_unit', 'amountingredient__amount')
+        return get_shopping_cart(data)
+
     @action(
         methods=('POST', 'DELETE'),
         detail=False,
@@ -67,9 +76,8 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
     def shopping_cart(self, request, id):
         """
         Action for shopping_cart:
-            - Если POST запрос, сериализуем recipe и создаем запись в Favorite
-            - Если DELETE запрос удаляем запись в таблице Favorite по id и user
-
+            - Если POST запрос, сериализуем recipe и создаем запись в Shopping
+            - Если DELETE запрос удаляем запись в таблице Shopping по id и user
             - права доступа: авторизованные пользователи
             - доступные методы: POST, DELETE
         """
@@ -95,7 +103,6 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
         Action for subscribing:
             - Если POST запрос, сериализуем recipe и создаем запись в Favorite
             - Если DELETE запрос удаляем запись в таблице Favorite по id и user
-
             - права доступа: авторизованные пользователи
             - доступные методы: POST, DELETE
         """
@@ -112,11 +119,10 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
             return Response(status=HTTP_204_NO_CONTENT)
 
     def get_serializer_class(self):
-        if self.action == 'favorite': return None
+        if self.action in ('favorite', 'download_shopping_cart'): return None
         elif self.action in ('list', 'retrieve'): return RecipeSerializer
         elif self.action in ('create', 'partial_update'): 
             return RecipeCreateSerializer
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-    
