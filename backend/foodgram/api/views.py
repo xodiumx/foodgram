@@ -16,8 +16,10 @@ from django.shortcuts import get_list_or_404
 from foodgram.pagination  import PagePaginationWithLimit
 from recipes.models import Tag, Ingredient, Recipe, AmountIngredient
 from .serializers import (
-    TagSerializer, IngredientInfoSerializer, RecipeSerializer,)
+    TagSerializer, IngredientInfoSerializer, RecipeSerializer,
+    RecipeCreateSerializer, )
 from .filters import IngredientFilter, RecipeFilter
+from .permissions import UserIsAuthenticated
 
 
 class TagViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet,):
@@ -47,6 +49,38 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     http_method_names = ('get', 'post', 'patch', 'delete')
+
+
+    @action(
+        methods=('GET',),
+        detail=False,
+        permission_classes=(UserIsAuthenticated,),
+        url_path='download_shopping_cart',)
+    def download_shopping_cart(self, request):
+        ...
+    
+    @action(
+        methods=('POST', 'DELETE'),
+        detail=False,
+        permission_classes=(UserIsAuthenticated,),
+        url_path='(?P<id>\d+)/shopping_cart',)
+    def shopping_cart(self, request):
+        ...
+    
+    @action(
+        methods=('POST', 'DELETE'),
+        detail=False,
+        permission_classes=(UserIsAuthenticated,),
+        url_path='(?P<id>\d+)/favorite',)
+    def favorite(self, request):
+        ...
+
     
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'): return RecipeSerializer
+        elif self.action in ('create', 'partial_update'): 
+            return RecipeCreateSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+    

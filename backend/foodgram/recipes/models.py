@@ -1,7 +1,8 @@
 from django.db import models
 
 from users.models import User
-from foodgram.settings import AMOUNT_CHOICES
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 
 
 class Tag(models.Model):
@@ -90,6 +91,7 @@ class Recipe(models.Model):
     )
     image = models.ImageField(
         'Картинка',
+        upload_to='recipes/',
         null=False,
         blank=False
     )
@@ -101,28 +103,25 @@ class Recipe(models.Model):
     )
     ingredients = models.ManyToManyField(
         Ingredient,
-        blank=False,
+        blank=True,
         related_name='recipes',
         verbose_name='Ингредиенты',
         through='AmountIngredient',)
     tags = models.ManyToManyField(
         Tag,
-        blank=False,
+        blank=True,
         related_name='recipes',
-        verbose_name='Тэги')
+        verbose_name='Тэги',
+        through='RecipeTag')
     cooking_time = models.IntegerField(
         'Время приготовления',
+        validators=(MaxValueValidator(500), MinValueValidator(1)),
         null=False,
         blank=False
     )
-    created = models.DateTimeField(
-        'Дата создания',
-        auto_now_add=True
-    )
 
-    # TODO Убрать created сделать по -id
     class Meta:
-        ordering = ('-created',)
+        ordering = ('-id',)
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
 
@@ -133,4 +132,12 @@ class Recipe(models.Model):
 class AmountIngredient(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.PROTECT)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    amount = models.IntegerField(default=1)
+    amount = models.IntegerField(
+        'Количество',
+        default=1, 
+        validators=(MaxValueValidator(500), MinValueValidator(1)),)
+
+
+class RecipeTag(models.Model):
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    tag = models.ForeignKey(Tag, on_delete=models.PROTECT)
