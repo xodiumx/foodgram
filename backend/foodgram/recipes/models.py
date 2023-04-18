@@ -1,8 +1,8 @@
 from django.db import models
-
-from users.models import User
 from django.core.validators import MaxValueValidator, MinValueValidator
 
+from users.models import User
+from .exceptions import CantSubscribe
 
 
 class Tag(models.Model):
@@ -130,6 +130,13 @@ class Recipe(models.Model):
 
 
 class AmountIngredient(models.Model):
+    """
+    Модель для связи количества ингредиентов.
+    Attributes:
+        - ingredient: FK to Ingredient model
+        - recipe: FK to Recipe model
+        - amount: integer value
+    """
     ingredient = models.ForeignKey(Ingredient, on_delete=models.PROTECT)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     amount = models.IntegerField(
@@ -139,5 +146,51 @@ class AmountIngredient(models.Model):
 
 
 class RecipeTag(models.Model):
+    """
+    Модель для связи рецептов и тегов.
+    Attributes:
+        - tag: FK to Tag model
+        - recipe: FK to Recipe model
+    """
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.PROTECT)
+
+
+class Favorite(models.Model):
+    """
+    Модель для связи рецепта и подписавшегося пользователя.
+    Attributes:
+        - user: FK to User model
+        - recipe: FK to Recipe model
+    """
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('recipe', 'user'),
+                name='unique_recipe_user',
+                violation_error_message='Повторная подписка',
+            )
+        ]
+
+    def clean(self):
+        """Валидация повторной подписки и подписки на свой рецепт."""
+        if self.user == self.recipe.author:
+            raise CantSubscribe(
+                {'detail': 'Нельзя подписаться на свой рецепт'})
+        
+        if Favorite.objects.filter(
+            user=self.user,
+            recipe=self.recipe).exists():
+            raise CantSubscribe(
+                {'detail': 'Нельзя подписаться повторно'})
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super(Favorite, self).save(*args, **kwargs)
+
+
+class ShopingCart(models.Model):
+    ...

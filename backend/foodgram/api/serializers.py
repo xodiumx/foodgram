@@ -10,7 +10,7 @@ from rest_framework.serializers import (
     CurrentUserDefault, ReadOnlyField, SerializerMethodField)
 
 from users.models import User, Follow
-from recipes.models import Tag, Ingredient, Recipe, AmountIngredient, RecipeTag
+from recipes.models import Tag, Ingredient, Recipe, AmountIngredient, Favorite
 
 
 class IngredientInfoSerializer(ModelSerializer):
@@ -134,3 +134,18 @@ class RecipeCreateSerializer(ModelSerializer):
                 amount=ingredient_data.pop('amount'))
         instance.save()
         return instance
+
+
+class RecipeFavoriteSerializer(ModelSerializer):
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+    
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+
+        Favorite.objects.create(recipe=instance, user=request.user)
+        data['image'] = f'{request.get_host()}{instance.image.url}'
+        return data

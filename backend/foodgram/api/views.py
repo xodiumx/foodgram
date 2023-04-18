@@ -5,19 +5,19 @@ from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    UpdateModelMixin)
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_204_NO_CONTENT
+from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 
-from django.shortcuts import get_list_or_404
+from django.shortcuts import get_list_or_404, get_object_or_404
 
 from foodgram.pagination  import PagePaginationWithLimit
-from recipes.models import Tag, Ingredient, Recipe, AmountIngredient
+from recipes.models import Tag, Ingredient, Recipe, AmountIngredient, Favorite
 from .serializers import (
     TagSerializer, IngredientInfoSerializer, RecipeSerializer,
-    RecipeCreateSerializer, )
+    RecipeCreateSerializer, RecipeFavoriteSerializer,)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import UserIsAuthenticated
 
@@ -72,12 +72,31 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
         detail=False,
         permission_classes=(UserIsAuthenticated,),
         url_path='(?P<id>\d+)/favorite',)
-    def favorite(self, request):
-        ...
+    def favorite(self, request, id):
+        """
+        Action for subscribing:
+            - Если POST запрос, передаем рецепт и 
+              request context в сериализатор, в сериализаторе
+              создаем запись в таблице Favorite
+            - Если DELETE запрос удаляем запись в таблице Favorite по id и user
 
-    
+            - права доступа: авторизованные пользователи
+            - доступные методы: POST, DELETE
+        """
+        if request.method == 'POST':
+            recipe = get_object_or_404(Recipe, id=id)
+            serializer = RecipeFavoriteSerializer(
+                recipe, context={'request': request})
+            return Response(serializer.data, HTTP_201_CREATED)
+        
+        elif request.method == 'DELETE':
+            get_object_or_404(
+                Favorite, user=request.user, recipe_id=id).delete()
+            return Response(status=HTTP_204_NO_CONTENT)
+
     def get_serializer_class(self):
-        if self.action in ('list', 'retrieve'): return RecipeSerializer
+        if self.action == 'favorite': return None
+        elif self.action in ('list', 'retrieve'): return RecipeSerializer
         elif self.action in ('create', 'partial_update'): 
             return RecipeCreateSerializer
 
