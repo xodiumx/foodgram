@@ -158,7 +158,7 @@ class RecipeTag(models.Model):
 
 class Favorite(models.Model):
     """
-    Модель для связи рецепта и подписавшегося пользователя.
+    Модель для добавления рецептов в избранное.
     Attributes:
         - user: FK to User model
         - recipe: FK to Recipe model
@@ -167,10 +167,11 @@ class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:
+        ordering = ('-id',)
         constraints = [
             models.UniqueConstraint(
                 fields=('recipe', 'user'),
-                name='unique_recipe_user',
+                name='unique_recipe_user_favorite',
                 violation_error_message='Повторная подписка',
             )
         ]
@@ -192,5 +193,34 @@ class Favorite(models.Model):
         return super(Favorite, self).save(*args, **kwargs)
 
 
-class ShopingCart(models.Model):
-    ...
+class ShoppingCart(models.Model):
+    """
+    Модель для добавления рецептов в корзину.
+    Attributes:
+        - user: FK to User model
+        - recipe: FK to Recipe model
+    """
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ('-id',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=('recipe', 'user'),
+                name='unique_recipe_user_cart',
+                violation_error_message='Повторная добавление в корзину',
+            )
+        ]
+
+    def clean(self):
+        """Валидация повторной подписки и подписки на свой рецепт."""
+        if ShoppingCart.objects.filter(
+            user=self.user,
+            recipe=self.recipe).exists():
+            raise CantSubscribe(
+                {'detail': 'Рецепт уже в корзине'})
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super(ShoppingCart, self).save(*args, **kwargs)

@@ -14,10 +14,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_list_or_404, get_object_or_404
 
 from foodgram.pagination  import PagePaginationWithLimit
-from recipes.models import Tag, Ingredient, Recipe, AmountIngredient, Favorite
+from recipes.models import Tag, Ingredient, Recipe, ShoppingCart, Favorite
 from .serializers import (
     TagSerializer, IngredientInfoSerializer, RecipeSerializer,
-    RecipeCreateSerializer, RecipeFavoriteSerializer,)
+    RecipeCreateSerializer, RecipeShortSerializer,)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import UserIsAuthenticated
 
@@ -64,8 +64,26 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
         detail=False,
         permission_classes=(UserIsAuthenticated,),
         url_path='(?P<id>\d+)/shopping_cart',)
-    def shopping_cart(self, request):
-        ...
+    def shopping_cart(self, request, id):
+        """
+        Action for shopping_cart:
+            - Если POST запрос, сериализуем recipe и создаем запись в Favorite
+            - Если DELETE запрос удаляем запись в таблице Favorite по id и user
+
+            - права доступа: авторизованные пользователи
+            - доступные методы: POST, DELETE
+        """
+        if request.method == 'POST':
+            recipe = get_object_or_404(Recipe, id=id)
+            ShoppingCart.objects.create(recipe=recipe, user=request.user)
+            serializer = RecipeShortSerializer(
+                recipe, context={'request': request})
+            return Response(serializer.data, HTTP_201_CREATED)
+        
+        elif request.method == 'DELETE':
+            get_object_or_404(
+                ShoppingCart, user=request.user, recipe_id=id).delete()
+            return Response(status=HTTP_204_NO_CONTENT)
     
     @action(
         methods=('POST', 'DELETE'),
@@ -75,9 +93,7 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
     def favorite(self, request, id):
         """
         Action for subscribing:
-            - Если POST запрос, передаем рецепт и 
-              request context в сериализатор, в сериализаторе
-              создаем запись в таблице Favorite
+            - Если POST запрос, сериализуем recipe и создаем запись в Favorite
             - Если DELETE запрос удаляем запись в таблице Favorite по id и user
 
             - права доступа: авторизованные пользователи
@@ -85,7 +101,8 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
         """
         if request.method == 'POST':
             recipe = get_object_or_404(Recipe, id=id)
-            serializer = RecipeFavoriteSerializer(
+            Favorite.objects.create(recipe=recipe, user=request.user)
+            serializer = RecipeShortSerializer(
                 recipe, context={'request': request})
             return Response(serializer.data, HTTP_201_CREATED)
         

@@ -136,7 +136,7 @@ class RecipeCreateSerializer(ModelSerializer):
         return instance
 
 
-class RecipeFavoriteSerializer(ModelSerializer):
+class RecipeShortSerializer(ModelSerializer):
 
     class Meta:
         model = Recipe
@@ -145,7 +145,5 @@ class RecipeFavoriteSerializer(ModelSerializer):
     def to_representation(self, instance):
         data = super().to_representation(instance)
         request = self.context.get('request')
-
-        Favorite.objects.create(recipe=instance, user=request.user)
         data['image'] = f'{request.get_host()}{instance.image.url}'
         return data
