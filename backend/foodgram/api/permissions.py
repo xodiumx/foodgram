@@ -1,13 +1,19 @@
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import (
+    BasePermission, IsAuthenticated, SAFE_METHODS)
 
 
-class SuperUserOrAdmin(IsAdminUser):
+class IsOwnerOrReadOnly(BasePermission):
+    """
+    Изменять чужие записи запрещено.
+    И не аутентифицированный пользователь может воспользоваться методами из:
+    SAFE_METHODS
+    """
+    message = 'Изменение чужого контента запрещено!'
 
-    def has_permission(self, request, view):
-        return bool(request.user.is_authenticated
-                    and (request.user.is_admin
-                         or request.user.is_superuser)
-                    )
+    def has_object_permission(self, request, view, obj):
+        return (request.method in SAFE_METHODS
+                or obj.author == request.user)
+
 
 
 class UserIsAuthenticated(IsAuthenticated):

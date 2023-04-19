@@ -4,8 +4,7 @@ from django.contrib.auth.hashers import check_password
 
 from rest_framework.serializers import (
     CharField, EmailField, ModelSerializer, ListSerializer,
-    Serializer, SlugRelatedField, 
-    CurrentUserDefault, Field)
+    Serializer, SerializerMethodField)
 
 
 from recipes.models import Recipe
@@ -15,9 +14,18 @@ from .exceptions import WrongData
 
 
 class InfoSerializer(ModelSerializer):
+
+    is_subscribed = SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name',)
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
+                  'is_subscribed', )
+    
+    def get_is_subscribed(self, follow):
+        user = self.context.get('request')
+        return Follow.objects.filter(
+            user=None if not user else user.user, following=follow).exists()
 
     
 class SignupSerializer(ModelSerializer):

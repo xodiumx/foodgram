@@ -10,7 +10,7 @@ login = LoginViewset.as_view()
 logout = LogoutViewset.as_view()
 
 urlpatterns = [
-    path('v1/', include(router_v1.urls)),
-    path('v1/auth/token/login/', login, name='login'),
-    path('v1/auth/token/logout/', logout, name='logout'),
+    path('', include(router_v1.urls)),
+    path('auth/token/login/', login, name='login'),
+    path('auth/token/logout/', logout, name='logout'),
 ]

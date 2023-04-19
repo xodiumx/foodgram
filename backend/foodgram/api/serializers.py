@@ -11,6 +11,7 @@ from rest_framework.serializers import (
 from users.models import User, Follow
 from recipes.models import (
     Tag, Ingredient, Recipe, AmountIngredient, Favorite, ShoppingCart,)
+from .exceptions import UserIsNotAuth
 
 
 class IngredientInfoSerializer(ModelSerializer):
@@ -73,7 +74,7 @@ class RecipeSerializer(ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'tags', 'author', 'ingredients', 'is_favorited',
-                  'is_in_shopping_cart', 'name', 'image', 'description', 
+                  'is_in_shopping_cart', 'name', 'image', 'text', 
                   'cooking_time',)
 
     def get_is_favorited(self, recipe_obj):
@@ -92,15 +93,19 @@ class RecipeCreateSerializer(ModelSerializer):
     image = Base64ImageField(required=True, allow_empty_file=False)
     ingredients = AmountIngredientSerializer(
         read_only=True, many=True, source='amountingredient_set')
-    tags = PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
+    tags = PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all(), 
+                                  required=True)
 
     class Meta:
         model = Recipe
-        fields = ('ingredients', 'tags', 'image', 'name', 'description', 
+        fields = ('ingredients', 'tags', 'image', 'name', 'text', 
                   'cooking_time',)
 
 
     def validate(self, data):
+        if self.context.get('request').user.is_anonymous:
+            raise UserIsNotAuth('Только авторизованные пользователи '
+                                'могут создавать и обновлять контент')
         ingredients = self.initial_data.get('ingredients')
         data['ingredients'] = ingredients
         return data
@@ -121,8 +126,8 @@ class RecipeCreateSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         instance.image = validated_data.get('image', instance.image)
         instance.name = validated_data.get('name', instance.name)
-        instance.description = validated_data.get(
-            'description', instance.description)
+        instance.text = validated_data.get(
+            'text', instance.text)
         instance.cooking_time = validated_data.get(
             'cooking_time', instance.cooking_time
         )

@@ -8,7 +8,6 @@ from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
 from rest_framework.response import Response
 from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.permissions import AllowAny
 
 from foodgram.pagination  import PagePaginationWithLimit
 from users.models import User
@@ -17,8 +16,9 @@ from .serializers import (
     TagSerializer, IngredientInfoSerializer, RecipeSerializer,
     RecipeCreateSerializer, RecipeShortSerializer)
 from .filters import IngredientFilter, RecipeFilter
-from .permissions import UserIsAuthenticated
+from .permissions import UserIsAuthenticated, IsOwnerOrReadOnly
 from .utils import get_shopping_cart
+
 
 class TagViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet,):
     
@@ -47,6 +47,7 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     http_method_names = ('get', 'post', 'patch', 'delete')
+    permission_classes = (IsOwnerOrReadOnly,)
 
     @action(
         methods=('GET',),
