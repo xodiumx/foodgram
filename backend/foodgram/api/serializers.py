@@ -1,9 +1,6 @@
 import base64
 
 from django.core.files.base import ContentFile
-from django.shortcuts import get_object_or_404
-from django.contrib.auth.hashers import check_password
-from rest_framework.validators import UniqueTogetherValidator
 from rest_framework.serializers import (
     ModelSerializer, PrimaryKeyRelatedField, ImageField, ReadOnlyField, 
     SerializerMethodField, )

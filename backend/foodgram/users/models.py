@@ -3,6 +3,7 @@ from django.db import models
 
 from .exceptions import CantSubscribe
 
+
 class User(AbstractUser):
     """
     Модель для пользователей.
@@ -17,7 +18,6 @@ class User(AbstractUser):
         unique=True,
         blank=False,
         null=False,
-        #validators=(validate_username,),
     )
     email = models.EmailField(
         max_length=254,

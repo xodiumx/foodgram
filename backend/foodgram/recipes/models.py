@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from users.models import User
-from .exceptions import CantSubscribe
+from .exceptions import CantSubscribe, NotUniqueIngredient, NotUniqueTag
 
 
 class Tag(models.Model):
@@ -139,10 +139,26 @@ class AmountIngredient(models.Model):
     """
     ingredient = models.ForeignKey(Ingredient, on_delete=models.PROTECT)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    amount = models.IntegerField(
-        'Количество',
-        default=1, 
-        validators=(MaxValueValidator(500), MinValueValidator(1)),)
+    amount = models.IntegerField('Количество', default=1, )
+
+    def clean(self):
+        """
+        - Валидация повторного добавления ингредиента
+        - Количество должно быть в рамках 0 - 600
+        """
+        if AmountIngredient.objects.filter(
+            ingredient=self.ingredient,
+            recipe=self.recipe).exists():
+            raise NotUniqueIngredient(
+                {'detail': 'Повторное добавление ингредиента'})
+        
+        if not 0 < self.amount < 600:
+            raise NotUniqueIngredient(
+                {'detail': 'Максимальное количество 0 - 600'})
+        
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super(AmountIngredient, self).save(*args, **kwargs)
 
 
 class RecipeTag(models.Model):
@@ -209,7 +225,7 @@ class ShoppingCart(models.Model):
             models.UniqueConstraint(
                 fields=('recipe', 'user'),
                 name='unique_recipe_user_cart',
-                violation_error_message='Повторная добавление в корзину',
+                violation_error_message='Повторное добавление в корзину',
             )
         ]
 
