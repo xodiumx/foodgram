@@ -5,12 +5,12 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework.serializers import (
-    IntegerField, Field, ModelSerializer,
-    Serializer, PrimaryKeyRelatedField, ImageField, ListField,
-    CurrentUserDefault, ReadOnlyField, SerializerMethodField)
+    ModelSerializer, PrimaryKeyRelatedField, ImageField, ReadOnlyField, 
+    SerializerMethodField, )
 
 from users.models import User, Follow
-from recipes.models import Tag, Ingredient, Recipe, AmountIngredient, Favorite
+from recipes.models import (
+    Tag, Ingredient, Recipe, AmountIngredient, Favorite, ShoppingCart,)
 
 
 class IngredientInfoSerializer(ModelSerializer):
@@ -76,11 +76,15 @@ class RecipeSerializer(ModelSerializer):
                   'is_in_shopping_cart', 'name', 'image', 'description', 
                   'cooking_time',)
 
-    def get_is_favorited(self, obj):
-        return None
+    def get_is_favorited(self, recipe_obj):
+        return Favorite.objects.filter(
+            user_id=self.context.get('request').user.id,
+            recipe=recipe_obj).exists()
     
-    def get_is_in_shopping_cart(self, obj):
-        return None
+    def get_is_in_shopping_cart(self, recipe_obj):
+        return ShoppingCart.objects.filter(
+            user_id=self.context.get('request').user.id,
+            recipe=recipe_obj).exists()
 
 
 class RecipeCreateSerializer(ModelSerializer):

@@ -1,17 +1,12 @@
-from django.http import HttpResponse
-from django.shortcuts import get_list_or_404, get_object_or_404
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework.decorators import action
-from rest_framework.filters import SearchFilter
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    ListModelMixin, RetrieveModelMixin,
                                    UpdateModelMixin)
-from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
 from rest_framework.response import Response
-from rest_framework.status import (
-    HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT)
-from rest_framework.views import APIView
+from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
 from rest_framework.viewsets import GenericViewSet
 from rest_framework.permissions import AllowAny
 
@@ -20,7 +15,7 @@ from users.models import User
 from recipes.models import Tag, Ingredient, Recipe, ShoppingCart, Favorite
 from .serializers import (
     TagSerializer, IngredientInfoSerializer, RecipeSerializer,
-    RecipeCreateSerializer, RecipeShortSerializer, AmountIngredientSerializer)
+    RecipeCreateSerializer, RecipeShortSerializer)
 from .filters import IngredientFilter, RecipeFilter
 from .permissions import UserIsAuthenticated
 from .utils import get_shopping_cart
@@ -61,12 +56,10 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
         url_path='download_shopping_cart',
         permission_classes=(UserIsAuthenticated,),)
     def download_shopping_cart(self, request):
-        # TODO: возможность распечатки нескольких рецептов и объединение ингредиентов
         user = get_object_or_404(User, id=request.user.id)
-        queryset = ShoppingCart.objects.select_related('recipe').filter(user=user)
-        data = queryset[0].recipe.ingredients.all().values(
-            'name', 'measurement_unit', 'amountingredient__amount')
-        return get_shopping_cart(data)
+        queryset = ShoppingCart.objects.select_related(
+                                        'recipe').filter(user=user)
+        return get_shopping_cart(queryset)
 
     @action(
         methods=('POST', 'DELETE'),

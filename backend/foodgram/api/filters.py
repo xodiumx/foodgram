@@ -1,11 +1,11 @@
 from django.db.models import Count, Q
 from django_filters import rest_framework as filter
 
-from recipes.models import Ingredient, Recipe
+from recipes.models import Ingredient, Recipe, ShoppingCart, Favorite
 
 
 class IngredientFilter(filter.FilterSet):
-    """Фильтрация ингредиента по названию или по части."""
+    """Фильтрация ингредиента по названию или по части названия."""
     search_title = ('Name')
     search_description = ('Search ingredient by part of name')
 
@@ -23,28 +23,19 @@ class RecipeFilter(filter.FilterSet):
     Фильтрация рецептов по:
         - Автору
         - Тэгам
-        -
-        -
+        - Избранным рецептам
+        - Рецептам в корзине
     """
-    # TODO: 
-    # is_favorited = filter.CharFilter(
-    #     field_name='is_favorited',
-    #     lookup_expr='lte'
-    # )
-    # is_in_shopping_cart = filter.CharFilter(
-    #     field_name='is_in_shopping_cart',
-    #     lookup_expr='icontains'
-    # )
-    author = filter.NumberFilter(
-        field_name='author__id',
-    )
-    tags = filter.CharFilter(
-        method='filter_tags',)
+    is_favorited = filter.BooleanFilter(
+        method='filter_is_favorited',)
+    is_in_shopping_cart = filter.BooleanFilter(
+        method='filter_is_in_shopping_cart',)
+    author = filter.NumberFilter(field_name='author__id',)
+    tags = filter.CharFilter(method='filter_tags',)
 
     class Meta:
         model = Recipe
-        #'is_favorited', 'is_in_shopping_cart', 
-        fields = ('author', 'tags')
+        fields = ('author', 'tags', 'is_favorited', 'is_in_shopping_cart', )
     
     
     def filter_tags(self, queryset, name, value):
@@ -55,6 +46,23 @@ class RecipeFilter(filter.FilterSet):
         """
         tags = value.split('&tags=')
         return queryset.annotate(num_tags=Count(
-                'tags__slug', 
+                'tags__slug',
                 filter=Q(tags__slug__in=tags),
                 distinct=True)).filter(num_tags=len(tags), tags__slug__in=tags)
+
+
+    def filter_is_favorited(self, queryset, name, value):
+        user = self.request.user
+        if not user.is_anonymous and value:
+            res = [qs.recipe.id for qs in Favorite.objects.filter(
+                   user=user)]
+            return queryset.filter(id__in=res)
+        return queryset
+
+    def filter_is_in_shopping_cart(self, queryset, name, value):
+        user = self.request.user
+        if not user.is_anonymous and value:
+            res = [qs.recipe.id for qs in ShoppingCart.objects.filter(
+                   user=user)]
+            return queryset.filter(id__in=res)
+        return queryset
