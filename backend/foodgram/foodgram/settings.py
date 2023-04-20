@@ -15,8 +15,13 @@ SECRET_KEY = 'django-insecure-a+=!1t6qxcq(k=m_$+dc0cwp73_2^k-%k)nht@1+0!f!-dw$%j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+# Allows Ips 
+
 ALLOWED_HOSTS = ['*']
 
+# CSRF
+
+CSRF_TRUSTED_ORIGINS = ['http://localhost']
 
 # Application definition
 
@@ -73,7 +78,6 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -87,7 +91,6 @@ DATABASES = {
 }
 
 # Password validation
-# https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -148,7 +151,7 @@ SIMPLE_JWT = {
     'JWK_URL': None,
     'LEEWAY': 0,
 
-    'AUTH_HEADER_TYPES': ('Bearer',),
+    'AUTH_HEADER_TYPES': ('Token',),
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
@@ -166,34 +169,7 @@ SIMPLE_JWT = {
 
 }
 
-# Internationalization
-# https://docs.djangoproject.com/en/4.1/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-
-STATIC_URL = '/static/'
-STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
-#STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
-# Media files
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+# Swagger settings
 
 SWAGGER_SETTINGS = {
     'SECURITY_DEFINITIONS': {
@@ -205,10 +181,34 @@ SWAGGER_SETTINGS = {
     }
 }
 
+# Internationalization
+
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'UTC'
+
+USE_I18N = True
+
+USE_TZ = True
+
+# Static files (CSS, JavaScript, Images)
+
+STATIC_URL = '/static/'
+#STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+# Media files
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Default primary key field type
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
 # Frontend settings
 
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost',
-# ]
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost',
+]
 CORS_URLS_REGEX = r'^/api/.*$'

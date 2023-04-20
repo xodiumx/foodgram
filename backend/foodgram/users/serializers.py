@@ -14,7 +14,7 @@ from .exceptions import WrongData
 
 
 class InfoSerializer(ModelSerializer):
-
+    """Сериализация информации о пользователе."""
     is_subscribed = SerializerMethodField()
 
     class Meta:
@@ -23,17 +23,20 @@ class InfoSerializer(ModelSerializer):
                   'is_subscribed', )
     
     def get_is_subscribed(self, follow):
-        user = self.context.get('request')
+        request = self.context.get('request')
         return Follow.objects.filter(
-            user=None if not user else user.user, following=follow).exists()
+            user= None if request.user.is_anonymous else request.user, 
+            following=follow).exists()
 
     
 class SignupSerializer(ModelSerializer):
+    """Сериализациия данных регистрации пользователя."""
     class Meta:
         model = User
         fields = ('username', 'email', 'password', 'first_name', 'last_name',)
 
     def create(self, validated_data):
+        """Хешируем пароль через set_password."""
         user = User.objects.create(**validated_data)
         user.set_password(user.password)
         user.save()
@@ -41,7 +44,10 @@ class SignupSerializer(ModelSerializer):
 
 
 class LoginSerializer(Serializer):
-
+    """
+    Сериализация данных при авторизации пользователя.
+    При успешной авторизации выдаем token и записываем последнее посещение.
+    """
     email = EmailField(max_length=254)
     password = CharField(max_length=64)
 
@@ -55,7 +61,10 @@ class LoginSerializer(Serializer):
     
 
 class ChangePasswordSerializer(Serializer):
-
+    """
+    Сериализция данных изменения пароля.
+    Если старый пароль введен верно записываем новый захешированный пароль.
+    """
     new_password = CharField(max_length=64)
     current_password = CharField(max_length=64)
 
@@ -69,14 +78,14 @@ class ChangePasswordSerializer(Serializer):
 
 
 class RecipeInfoSerializer(ModelSerializer):
-
+    """Информация о рецепте, для подписки на пользователя."""
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
 class SubInfoSerializer(ModelSerializer):
-
+    """Сериализация данных при подписке на пользователя."""
     recipes = RecipeInfoSerializer(read_only=True, many=True)
 
     class Meta:
@@ -104,5 +113,5 @@ class SubInfoSerializer(ModelSerializer):
     
 
 class SubscriptionSerializer(ListSerializer):
-
+    """Сериализация всех подписок пользователя."""
     child = SubInfoSerializer()

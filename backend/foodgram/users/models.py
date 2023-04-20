@@ -40,8 +40,8 @@ class User(AbstractUser):
 
     class Meta:
         ordering = ('id',)
-        verbose_name = ('User')
-        verbose_name_plural = ('Users')
+        verbose_name = ('Пользователь')
+        verbose_name_plural = ('Пользователи')
 
     def __str__(self):
         return self.username
@@ -73,6 +73,8 @@ class Follow(models.Model):
                 violation_error_message='Повторная подписка',
             )
         ]
+        verbose_name = ('Подписка')
+        verbose_name_plural = ('Подписки')
     
     def clean(self):
         """Валидация повторной подписки и подписки на себя."""

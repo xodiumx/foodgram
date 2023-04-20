@@ -1,22 +1,35 @@
 from django.contrib.admin import ModelAdmin, StackedInline, register
 
-from .models import Ingredient, Recipe, Tag, AmountIngredient
+from .models import (
+    Ingredient, Recipe, Tag, AmountIngredient, RecipeTag, 
+    ShoppingCart, Favorite)
 
 
 class IngredientInline(StackedInline):
-    model = AmountIngredient
     extra = 5
+    model = AmountIngredient
     verbose_name = 'Ингредиент'
     verbose_name_plural = 'Ингредиенты'
 
 
+class TagInline(StackedInline):
+    extra = 2
+    model = Tag.recipes.through
+    verbose_name = 'Тег'
+    verbose_name_plural = 'Теги'
+
+
+@register(Tag)
+class TagAdmin(ModelAdmin):
+    list_display = ('name', )
+    search_fields = ('name',)
+    list_filter = ('name',)
+    empty_value_display = '-пусто-'
+
+
 @register(Ingredient)
 class IngredientAdmin(ModelAdmin):
-    """
-    """
-    list_display = (
-        'name',  
-    )
+    list_display = ('name', )
     search_fields = ('name',)
     list_filter = ('name',)
     empty_value_display = '-пусто-'
@@ -24,24 +37,8 @@ class IngredientAdmin(ModelAdmin):
 
 @register(Recipe)
 class RecipeAdmin(ModelAdmin):
-    """
-    """
-    inlines = (IngredientInline,)
-    list_display = (
-        'name', 
-    )
-    search_fields = ('name',)
-    list_filter = ('name',)
-    empty_value_display = '-пусто-'
-
-
-@register(Tag)
-class TagAdmin(ModelAdmin):
-    """
-    """
-    list_display = (
-        'name', 
-    )
+    inlines = (TagInline, IngredientInline,)
+    list_display = ('name', )
     search_fields = ('name',)
     list_filter = ('name',)
     empty_value_display = '-пусто-'
@@ -49,6 +46,19 @@ class TagAdmin(ModelAdmin):
 
 @register(AmountIngredient)
 class AmountIngredientAdmin(ModelAdmin):
-    list_display = (
-        'ingredient', 
-    )
+    list_display = ('ingredient', )
+
+
+@register(RecipeTag)
+class RecipeTagAdmin(ModelAdmin):
+    list_display = ('tag', )
+
+
+@register(Favorite)
+class FavoriteAdmin(ModelAdmin):
+    list_display = ('recipe', 'user' )
+
+
+@register(ShoppingCart)
+class ShoppingCartAdmin(ModelAdmin):
+    list_display = ('recipe', 'user' )

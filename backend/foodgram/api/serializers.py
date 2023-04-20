@@ -1,4 +1,4 @@
-import base64
+from base64 import b64decode
 
 from django.core.files.base import ContentFile
 from rest_framework.serializers import (
@@ -12,20 +12,21 @@ from .exceptions import UserIsNotAuth
 
 
 class IngredientInfoSerializer(ModelSerializer):
-
+    """Сериализация ингредиентов."""
     class Meta:
         model = Ingredient
         fields = ('id', 'name', 'measurement_unit')
 
 
 class TagSerializer(ModelSerializer):
-
+    """Сериализация тегов."""
     class Meta:
         model = Tag
         fields = ('id', 'name', 'color', 'slug')
 
 
 class AmountIngredientSerializer(ModelSerializer):
+    """Сериализация ингредиента и связанной таблицы Amount."""
     id = ReadOnlyField(source='ingredient.id')
     name = ReadOnlyField(source='ingredient.name')
     measurement_unit = ReadOnlyField(source='ingredient.measurement_unit')
@@ -36,7 +37,10 @@ class AmountIngredientSerializer(ModelSerializer):
 
 
 class AuthorSerializer(ModelSerializer):
-
+    """
+    Сериализация пользователей.
+    В методе to_representation добавляем информацию о подписке на пользователя.
+    """
     class Meta:
         model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name')
@@ -50,17 +54,21 @@ class AuthorSerializer(ModelSerializer):
 
 
 class Base64ImageField(ImageField):
-    
+    """
+    Декодировка картинки из base64.
+    - Из исходной строки извлекаем формат и картинку.
+    - Записываем картинку в формате 'recipe.<расширение>.
+    """
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')  
             ext = format.split('/')[-1]  
-            data = ContentFile(base64.b64decode(imgstr), name=f'recipe.{ext}')
+            data = ContentFile(b64decode(imgstr), name=f'recipe.{ext}')
         return super().to_internal_value(data)
 
 
 class RecipeSerializer(ModelSerializer):
-
+    """Сериализцаия рецептов для метода GET."""
     author = AuthorSerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
     ingredients = AmountIngredientSerializer(
@@ -86,7 +94,7 @@ class RecipeSerializer(ModelSerializer):
 
 
 class RecipeCreateSerializer(ModelSerializer):
-
+    """Сериализцаия рецептов для методов POST и UPDATE."""
     image = Base64ImageField(required=True, allow_empty_file=False)
     ingredients = AmountIngredientSerializer(
         read_only=True, many=True, source='amountingredient_set')
@@ -100,6 +108,10 @@ class RecipeCreateSerializer(ModelSerializer):
 
 
     def validate(self, data):
+        """
+        В data записываем ingredient-ы так как они сериализуются 
+        только для чтения.
+        """
         if self.context.get('request').user.is_anonymous:
             raise UserIsNotAuth('Только авторизованные пользователи '
                                 'могут создавать и обновлять контент')
@@ -108,6 +120,14 @@ class RecipeCreateSerializer(ModelSerializer):
         return data
 
     def create(self, validated_data):
+        """
+        При создании рецепта:
+        - Извлекаем из validated_data теги и ингредиенты
+        - Создаем запись в модели Recipe
+        - Добавляем к объекту recipe теги
+        - Создаем в связанной таблице AmountIngredient записи об ингредиентах и
+          их количестве.
+        """
         tags = validated_data.pop('tags')
         ingredients_data = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
@@ -121,6 +141,11 @@ class RecipeCreateSerializer(ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
+        """
+        Если есть запись обновления поля, берем ее из validated_data иначе
+        берем уже имеющуюся запись.
+        Информацию об ингредиентах отчищаем и создаем по новой.
+        """
         instance.image = validated_data.get('image', instance.image)
         instance.name = validated_data.get('name', instance.name)
         instance.text = validated_data.get(
@@ -143,7 +168,7 @@ class RecipeCreateSerializer(ModelSerializer):
 
 
 class RecipeShortSerializer(ModelSerializer):
-
+    """Краткая информация о рецепте."""
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')

@@ -2,7 +2,7 @@ from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from users.models import User
-from .exceptions import CantSubscribe, NotUniqueIngredient, NotUniqueTag
+from .exceptions import CantSubscribe, NotUniqueIngredient
 
 
 class Tag(models.Model):
@@ -30,9 +30,14 @@ class Tag(models.Model):
         null=False,
         blank=False,)
 
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+
     def __str__(self):
         return self.name
 
+    
 
 class Ingredient(models.Model):
     """
@@ -53,6 +58,10 @@ class Ingredient(models.Model):
         max_length=20,
         null=False,
         blank=False,)
+    
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
     
     class Meta:
         verbose_name = 'Ингредиент'
@@ -112,7 +121,7 @@ class Recipe(models.Model):
         blank=True,
         related_name='recipes',
         verbose_name='Тэги',
-        through='RecipeTag')
+        through='RecipeTag',)
     cooking_time = models.IntegerField(
         'Время приготовления',
         validators=(MaxValueValidator(500), MinValueValidator(1)),
@@ -141,6 +150,10 @@ class AmountIngredient(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     amount = models.IntegerField('Количество', default=1, )
 
+    class Meta:
+        verbose_name = 'Количество ингредента'
+        verbose_name_plural = 'Количество ингредентов'
+
     def clean(self):
         """
         - Валидация повторного добавления ингредиента
@@ -168,9 +181,13 @@ class RecipeTag(models.Model):
         - tag: FK to Tag model
         - recipe: FK to Recipe model
     """
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.PROTECT)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
 
+    class Meta:
+        verbose_name = 'Теги рецепта'
+        verbose_name_plural = 'Теги рецептов'
+    
 
 class Favorite(models.Model):
     """
@@ -191,12 +208,14 @@ class Favorite(models.Model):
                 violation_error_message='Повторная подписка',
             )
         ]
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные'
 
     def clean(self):
         """Валидация повторной подписки и подписки на свой рецепт."""
         if self.user == self.recipe.author:
             raise CantSubscribe(
-                {'detail': 'Нельзя подписаться на свой рецепт'})
+                {'errors': 'Нельзя подписаться на свой рецепт'})
         
         if Favorite.objects.filter(
             user=self.user,
@@ -228,6 +247,8 @@ class ShoppingCart(models.Model):
                 violation_error_message='Повторное добавление в корзину',
             )
         ]
+        verbose_name = 'Корзина'
+        verbose_name_plural = 'Корзины'
 
     def clean(self):
         """Валидация повторной подписки и подписки на свой рецепт."""

@@ -52,17 +52,19 @@ class RecipeFilter(filter.FilterSet):
 
 
     def filter_is_favorited(self, queryset, name, value):
+        """Фильтруем по id рецепта привязанного к пользователю."""
         user = self.request.user
         if not user.is_anonymous and value:
-            res = [qs.recipe.id for qs in Favorite.objects.filter(
+            ids = [qs.recipe.id for qs in Favorite.objects.filter(
                    user=user)]
-            return queryset.filter(id__in=res)
+            return queryset.filter(id__in=ids)
         return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
+        """Фильтруем по id рецепта привязанного к пользователю."""
         user = self.request.user
         if not user.is_anonymous and value:
-            res = [qs.recipe.id for qs in ShoppingCart.objects.filter(
+            ids = [qs.recipe.id for qs in ShoppingCart.objects.filter(
                    user=user)]
-            return queryset.filter(id__in=res)
+            return queryset.filter(id__in=ids)
         return queryset

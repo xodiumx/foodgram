@@ -7,7 +7,3 @@ class CantSubscribe(ValidationError):
 
 class NotUniqueIngredient(ValidationError):
     ...
-
-
-class NotUniqueTag(ValidationError):
-    ...

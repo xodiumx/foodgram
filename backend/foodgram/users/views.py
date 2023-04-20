@@ -51,7 +51,7 @@ class UserViewSet(CreateModelMixin,
             - Права доступа: авторизованные пользователи.
             - requests methods - get
         """
-        serializer = InfoSerializer(request.user,)
+        serializer = InfoSerializer(request.user, context={'request': request})
         return Response(serializer.data, status=HTTP_200_OK)
 
     @action(

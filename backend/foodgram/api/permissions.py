@@ -15,6 +15,6 @@ class IsOwnerOrReadOnly(BasePermission):
                 or obj.author == request.user)
 
 
-
 class UserIsAuthenticated(IsAuthenticated):
+    """Доступ для аутентифицированных пользователей."""
     ...

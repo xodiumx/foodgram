@@ -57,6 +57,11 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
         url_path='download_shopping_cart',
         permission_classes=(UserIsAuthenticated,),)
     def download_shopping_cart(self, request):
+        """
+        Выдаем рецепт в виде pdf-file-a:
+        - Создаем queryset Рецептов занесенных пользователем в корзину
+        - Пердаем queryset в функцию формирования файла get_shopping_cart
+        """
         user = get_object_or_404(User, id=request.user.id)
         queryset = ShoppingCart.objects.select_related(
                                         'recipe').filter(user=user)

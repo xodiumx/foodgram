@@ -1,3 +1,5 @@
+import os
+
 from django.http import HttpResponse
 
 from reportlab.pdfgen.canvas import Canvas
@@ -22,10 +24,12 @@ def get_shopping_cart(queryset):
     
     file = Canvas(response)
 
-    pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
-    file.setFont('Arial', 14)
+    path_to_font = os.path.join('static/download_cart', 'arial.ttf')
+    pdfmetrics.registerFont(TTFont('Arial', path_to_font))
+    file.setFont('Arial', 18)
 
-    file.drawImage('static\download.jpg', 0, -400)
+    path_to_image = os.path.join('static/download_cart', 'download.jpg')
+    file.drawImage(path_to_image, 0, -400)
 
     file.drawString(50, 780, 'Наименование')
     file.drawString(400, 780, 'Количество')
