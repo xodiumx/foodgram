@@ -106,7 +106,7 @@ class Recipe(models.Model):
     )
     text = models.TextField(
         'Описание',
-        max_length=500,
+        max_length=2000,
         null=False,
         blank=False
     )
@@ -165,9 +165,9 @@ class AmountIngredient(models.Model):
             raise NotUniqueIngredient(
                 {'detail': 'Повторное добавление ингредиента'})
         
-        if not 0 < self.amount < 600:
+        if not 0 < self.amount < 5000:
             raise NotUniqueIngredient(
-                {'detail': 'Максимальное количество 0 - 600'})
+                {'detail': 'Максимальное количество 0 - 5000'})
         
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -221,7 +221,7 @@ class Favorite(models.Model):
             user=self.user,
             recipe=self.recipe).exists():
             raise CantSubscribe(
-                {'detail': 'Нельзя подписаться повторно'})
+                {'errors': 'Нельзя подписаться повторно'})
         
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -256,7 +256,7 @@ class ShoppingCart(models.Model):
             user=self.user,
             recipe=self.recipe).exists():
             raise CantSubscribe(
-                {'detail': 'Рецепт уже в корзине'})
+                {'errors': 'Рецепт уже в корзине'})
         
     def save(self, *args, **kwargs):
         self.full_clean()

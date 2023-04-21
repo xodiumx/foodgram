@@ -10,7 +10,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-a+=!1t6qxcq(k=m_$+dc0cwp73_2^k-%k)nht@1+0!f!-dw$%j'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -21,7 +21,7 @@ ALLOWED_HOSTS = ['*']
 
 # CSRF
 
-CSRF_TRUSTED_ORIGINS = ['http://localhost']
+CSRF_TRUSTED_ORIGINS = [os.getenv('CSRF_TRUSTED_ORIGINS')]
 
 # Application definition
 
@@ -129,21 +129,21 @@ REST_FRAMEWORK = {
 
 # Celery
 
-CELERY_BROKER_URL = 'redis://127.0.0.1:14000/0'
-CELERY_RESULT_BACKEND = 'redis://127.0.0.1:14000/0'
-CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 60
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
+CELERY_TASK_TRACK_STARTED = bool(os.getenv('CELERY_TASK_TRACK_STARTED'))
+CELERY_TASK_TIME_LIMIT = int(os.getenv('CELERY_TASK_TIME_LIMIT'))
 
 # JWT
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=3),
-    'REFRESH_TOKEN_LIFETIME': timedelta(hours=12),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=int(os.getenv('ACCESS_TOKEN_LIFETIME'))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=int(os.getenv('REFRESH_TOKEN_LIFETIME'))),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
 
-    'ALGORITHM': 'HS256',
+    'ALGORITHM': os.getenv('ALGORITHM'),
     'SIGNING_KEY': SECRET_KEY,
     'VERIFYING_KEY': None,
     'AUDIENCE': None,
@@ -164,9 +164,8 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
-
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('SLIDING_TOKEN_LIFETIME'))),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=int(os.getenv('SLIDING_TOKEN_REFRESH_LIFETIME'))),
 }
 
 # Swagger settings
@@ -209,6 +208,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Frontend settings
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost',
+    os.getenv('CORS_ALLOWED_ORIGINS'),
 ]
 CORS_URLS_REGEX = r'^/api/.*$'

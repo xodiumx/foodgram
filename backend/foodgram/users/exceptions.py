@@ -1,4 +1,4 @@
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, AuthenticationFailed
 
 
 class WrongData(ValidationError):
@@ -8,4 +8,9 @@ class WrongData(ValidationError):
 
 class CantSubscribe(ValidationError):
     """400 ошибка при повторной подписке и подписке на себя."""
+    ...
+
+
+class UserIsNotAuthenticated(AuthenticationFailed):
+    """401 ошибка если пользователь не авторизован."""
     ...

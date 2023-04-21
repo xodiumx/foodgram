@@ -80,12 +80,12 @@ class Follow(models.Model):
         """Валидация повторной подписки и подписки на себя."""
         if self.user == self.following:
             raise CantSubscribe(
-                {'detail': 'Нельзя подписаться на себя'})
+                {'errors': 'Нельзя подписаться на себя'})
         
         if Follow.objects.filter(user=self.user,
                                  following=self.following).exists():
             raise CantSubscribe(
-                {'detail': 'Нельзя подписаться повторно'})
+                {'errors': 'Нельзя подписаться повторно'})
         
     def save(self, *args, **kwargs):
         self.full_clean()

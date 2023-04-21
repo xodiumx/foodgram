@@ -33,7 +33,8 @@ class SignupSerializer(ModelSerializer):
     """Сериализациия данных регистрации пользователя."""
     class Meta:
         model = User
-        fields = ('username', 'email', 'password', 'first_name', 'last_name',)
+        fields = ('email', 'id', 'password', 'username', 'first_name', 
+                  'last_name',)
 
     def create(self, validated_data):
         """Хешируем пароль через set_password."""
@@ -41,6 +42,12 @@ class SignupSerializer(ModelSerializer):
         user.set_password(user.password)
         user.save()
         return user
+    
+    def to_representation(self, instance):
+        """Убрать пароль из ответа."""
+        data = super().to_representation(instance)
+        data.pop('password')
+        return data
 
 
 class LoginSerializer(Serializer):

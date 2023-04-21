@@ -25,6 +25,7 @@ from .serializers import (
         ChangePasswordSerializer,
         SubInfoSerializer,
         SubscriptionSerializer,)
+from .exceptions import UserIsNotAuthenticated
 
 
 class UserViewSet(CreateModelMixin,
@@ -152,7 +153,13 @@ class UserViewSet(CreateModelMixin,
         if self.action == 'subscribe': return None
         elif self.action == 'subscriptions': return SubscriptionSerializer
         elif self.action == 'set_password': return ChangePasswordSerializer
-        elif self.action in ('list', 'retrieve', 'me'): return InfoSerializer
+        elif self.action == 'list': return InfoSerializer
+        elif self.action in ('retrieve', 'me'):
+            if not self.request.user.is_anonymous:
+                return InfoSerializer
+            raise UserIsNotAuthenticated(
+                {'detail': 'Учетные данные не были предоставлены.'})
+
         return SignupSerializer
 
     
