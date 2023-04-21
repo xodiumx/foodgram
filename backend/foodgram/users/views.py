@@ -1,38 +1,35 @@
+from django.shortcuts import get_list_or_404, get_object_or_404
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
-from django.shortcuts import get_list_or_404, get_object_or_404
-
 from rest_framework.decorators import action
-from rest_framework.mixins import (
-    CreateModelMixin, ListModelMixin, RetrieveModelMixin,)
+from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
+                                   RetrieveModelMixin)
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.status import (
-    HTTP_200_OK, HTTP_201_CREATED, HTTP_204_NO_CONTENT,)
+from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
+                                   HTTP_204_NO_CONTENT,
+                                   HTTP_405_METHOD_NOT_ALLOWED)
 from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 
-from foodgram.pagination  import PagePaginationWithLimit
-from .models import User, Follow
-from .permissions import UserIsAuthenticated
-from .serializers import (
-        InfoSerializer,
-        SignupSerializer,
-        LoginSerializer,
-        ChangePasswordSerializer,
-        SubInfoSerializer,
-        SubscriptionSerializer,)
+from foodgram.pagination import PagePaginationWithLimit
+
 from .exceptions import UserIsNotAuthenticated
+from .models import Follow, User
+from .permissions import UserIsAuthenticated
+from .serializers import (ChangePasswordSerializer, InfoSerializer,
+                          LoginSerializer, SignupSerializer, SubInfoSerializer,
+                          SubscriptionSerializer)
 
 
 class UserViewSet(CreateModelMixin,
                   ListModelMixin,
                   RetrieveModelMixin,
                   GenericViewSet,):
-    
+
     lookup_field = 'id'
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
@@ -69,7 +66,7 @@ class UserViewSet(CreateModelMixin,
         serializer = ChangePasswordSerializer(request.user, data=request.data,)
         serializer.is_valid(raise_exception=True)
         return Response(status=HTTP_204_NO_CONTENT)
-    
+
     @swagger_auto_schema(
         method='post',
         manual_parameters=[
@@ -94,7 +91,7 @@ class UserViewSet(CreateModelMixin,
               Создаем запись в таблице Follow.
               Передаем объект following в сериализатор - SubInfoSerializer.
 
-            - Если DELETE запрос берем объект из таблицы Follow, 
+            - Если DELETE запрос берем объект из таблицы Follow,
               отфильтрованный, по текущему user-у и following-у и удаляем его.
 
             - Права доступа: авторизованные пользователи.
@@ -105,17 +102,17 @@ class UserViewSet(CreateModelMixin,
 
         if request.method == 'POST':
             Follow.objects.create(user=current_user, following=following)
-            serializer = SubInfoSerializer(following, 
+            serializer = SubInfoSerializer(following,
                                            context={'request': request})
             return Response(serializer.data, HTTP_201_CREATED)
-        
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             get_object_or_404(
                 Follow, user=current_user, following=following).delete()
             return Response(status=HTTP_204_NO_CONTENT)
-        
+        return Response(status=HTTP_405_METHOD_NOT_ALLOWED)
+
     @swagger_auto_schema(
-        method = 'get',
+        method='get',
         manual_parameters=[
             openapi.Parameter(
                 name='recipes_limit',
@@ -124,7 +121,7 @@ class UserViewSet(CreateModelMixin,
                 required=False,
                 description='how many recipes will be in request',
             )
-        ],)   
+        ],)
     @action(
         detail=False,
         methods=('GET',),
@@ -150,19 +147,22 @@ class UserViewSet(CreateModelMixin,
         return self.get_paginated_response(serializer.data)
 
     def get_serializer_class(self):
-        if self.action == 'subscribe': return None
-        elif self.action == 'subscriptions': return SubscriptionSerializer
-        elif self.action == 'set_password': return ChangePasswordSerializer
-        elif self.action == 'list': return InfoSerializer
-        elif self.action in ('retrieve', 'me'):
+        if self.action == 'subscribe':
+            return None
+        if self.action == 'subscriptions':
+            return SubscriptionSerializer
+        if self.action == 'set_password':
+            return ChangePasswordSerializer
+        if self.action == 'list':
+            return InfoSerializer
+        if self.action in ('retrieve', 'me'):
             if not self.request.user.is_anonymous:
                 return InfoSerializer
             raise UserIsNotAuthenticated(
                 {'detail': 'Учетные данные не были предоставлены.'})
-
         return SignupSerializer
 
-    
+
 class LoginViewset(TokenObtainPairView):
     """
     Login viewset:
@@ -171,12 +171,13 @@ class LoginViewset(TokenObtainPairView):
     """
     http_method_names = ('post',)
     serializer_class = LoginSerializer
-    
+
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        return Response(serializer.validated_data, 
+        return Response(serializer.validated_data,
                         status=HTTP_201_CREATED)
+
 
 class LogoutViewset(APIView):
     """

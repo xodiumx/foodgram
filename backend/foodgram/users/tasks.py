@@ -1,5 +1,5 @@
-from rest_framework_simplejwt.utils import aware_utcnow
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+from rest_framework_simplejwt.utils import aware_utcnow
 
 from foodgram.celery import app
 

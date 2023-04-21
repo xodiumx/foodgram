@@ -1,7 +1,7 @@
 from django.db.models import Count, Q
 from django_filters import rest_framework as filter
 
-from recipes.models import Ingredient, Recipe, ShoppingCart, Favorite
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart
 
 
 class IngredientFilter(filter.FilterSet):
@@ -12,7 +12,7 @@ class IngredientFilter(filter.FilterSet):
     name = filter.CharFilter(
         field_name='name',
         lookup_expr='istartswith',)
-    
+
     class Meta:
         model = Ingredient
         fields = ('name',)
@@ -36,8 +36,7 @@ class RecipeFilter(filter.FilterSet):
     class Meta:
         model = Recipe
         fields = ('author', 'tags', 'is_favorited', 'is_in_shopping_cart', )
-    
-    
+
     def filter_tags(self, queryset, name, value):
         """
         Создаем список slug-ов по которым необходима фильтрация.
@@ -46,10 +45,9 @@ class RecipeFilter(filter.FilterSet):
         """
         tags = value.split('&tags=')
         return queryset.annotate(num_tags=Count(
-                'tags__slug',
-                filter=Q(tags__slug__in=tags),
-                distinct=True)).filter(num_tags=len(tags), tags__slug__in=tags)
-
+            'tags__slug',
+            filter=Q(tags__slug__in=tags),
+            distinct=True)).filter(num_tags=len(tags), tags__slug__in=tags)
 
     def filter_is_favorited(self, queryset, name, value):
         """Фильтруем по id рецепта привязанного к пользователю."""

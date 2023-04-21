@@ -24,8 +24,8 @@ class TestDockerfileCompose:
         except FileNotFoundError:
             assert False, f'Проверьте, что в директорию {self.infra_dir_path} добавлен файл `docker-compose.yml`'
 
-        assert re.search(r'image:\s+postgres:15.2', docker_compose), (
-            'Проверьте, что  в файл docker-compose.yaml добавлен образ postgres:15.2'
+        assert re.search(r'image:\s+postgres:latest', docker_compose), (
+            'Проверьте, что  в файл docker-compose.yaml добавлен образ postgres:latest'
         )
         assert re.search(r'image:\s+([a-zA-Z0-9]+)\/([a-zA-Z0-9_\.])+(\:[a-zA-Z0-9_-]+)?', docker_compose), (
             'Проверьте, что добавили сборку контейнера из образа на вашем DockerHub в файл docker-compose.yml'

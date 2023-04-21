@@ -1,4 +1,4 @@
-from rest_framework.exceptions import ValidationError, AuthenticationFailed
+from rest_framework.exceptions import AuthenticationFailed, ValidationError
 
 
 class WrongData(ValidationError):

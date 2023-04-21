@@ -1,13 +1,11 @@
-import os
 import csv
+import os
 
 import django.db.utils
-
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand
 
 from ...models import Ingredient
-
 
 DATA_TABLES = {
     Ingredient: 'ingredients.csv',
@@ -18,8 +16,8 @@ def read_csv(name_file):
     """Считываем csv файл и добавляем к каждому элементу поле id."""
     path = os.path.join('static/data', name_file)
     with open(path, encoding='utf-8') as csv_file:
-        reader = csv.DictReader(csv_file, 
-                                fieldnames=('name', 'measurement_unit'), 
+        reader = csv.DictReader(csv_file,
+                                fieldnames=('name', 'measurement_unit'),
                                 delimiter=',',)
         result = []
         for i, elem in enumerate(reader):

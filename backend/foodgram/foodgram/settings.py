@@ -1,7 +1,7 @@
 import os
-
 from datetime import timedelta
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,7 +15,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-# Allows Ips 
+# Allows Ips
 
 ALLOWED_HOSTS = ['*']
 
@@ -193,7 +193,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 
 STATIC_URL = '/static/'
-#STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
+# STATICFILES_DIRS = ((BASE_DIR / 'static/'),)
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Media files

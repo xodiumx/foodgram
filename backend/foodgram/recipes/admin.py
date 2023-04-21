@@ -1,8 +1,7 @@
 from django.contrib.admin import ModelAdmin, StackedInline, register
 
-from .models import (
-    Ingredient, Recipe, Tag, AmountIngredient, RecipeTag, 
-    ShoppingCart, Favorite)
+from .models import (AmountIngredient, Favorite, Ingredient, Recipe, RecipeTag,
+                     ShoppingCart, Tag)
 
 
 class IngredientInline(StackedInline):
@@ -56,9 +55,9 @@ class RecipeTagAdmin(ModelAdmin):
 
 @register(Favorite)
 class FavoriteAdmin(ModelAdmin):
-    list_display = ('recipe', 'user' )
+    list_display = ('recipe', 'user')
 
 
 @register(ShoppingCart)
 class ShoppingCartAdmin(ModelAdmin):
-    list_display = ('recipe', 'user' )
+    list_display = ('recipe', 'user')

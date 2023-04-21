@@ -1,7 +1,8 @@
-from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 
 from users.models import User
+
 from .exceptions import CantSubscribe, NotUniqueIngredient
 
 
@@ -18,14 +19,14 @@ class Tag(models.Model):
         max_length=50,
         null=False,
         blank=False,
-        )
+    )
     color = models.CharField(
         'Цвет',
         max_length=16,
         null=False,
         blank=False,)
     slug = models.SlugField(
-        max_length=16, 
+        max_length=16,
         unique=True,
         null=False,
         blank=False,)
@@ -37,7 +38,6 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
-    
 
 class Ingredient(models.Model):
     """
@@ -58,11 +58,11 @@ class Ingredient(models.Model):
         max_length=20,
         null=False,
         blank=False,)
-    
+
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
-    
+
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
@@ -83,7 +83,7 @@ class Recipe(models.Model):
         - tags: Тэги
         - cooking_time: Время приготовления
     """
-    author  = models.ForeignKey(
+    author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='recipes',
@@ -160,15 +160,15 @@ class AmountIngredient(models.Model):
         - Количество должно быть в рамках 0 - 600
         """
         if AmountIngredient.objects.filter(
-            ingredient=self.ingredient,
-            recipe=self.recipe).exists():
+                ingredient=self.ingredient,
+                recipe=self.recipe).exists():
             raise NotUniqueIngredient(
                 {'detail': 'Повторное добавление ингредиента'})
-        
+
         if not 0 < self.amount < 5000:
             raise NotUniqueIngredient(
                 {'detail': 'Максимальное количество 0 - 5000'})
-        
+
     def save(self, *args, **kwargs):
         self.full_clean()
         return super(AmountIngredient, self).save(*args, **kwargs)
@@ -187,7 +187,7 @@ class RecipeTag(models.Model):
     class Meta:
         verbose_name = 'Теги рецепта'
         verbose_name_plural = 'Теги рецептов'
-    
+
 
 class Favorite(models.Model):
     """
@@ -216,13 +216,13 @@ class Favorite(models.Model):
         if self.user == self.recipe.author:
             raise CantSubscribe(
                 {'errors': 'Нельзя подписаться на свой рецепт'})
-        
+
         if Favorite.objects.filter(
-            user=self.user,
-            recipe=self.recipe).exists():
+                user=self.user,
+                recipe=self.recipe).exists():
             raise CantSubscribe(
                 {'errors': 'Нельзя подписаться повторно'})
-        
+
     def save(self, *args, **kwargs):
         self.full_clean()
         return super(Favorite, self).save(*args, **kwargs)
@@ -253,11 +253,11 @@ class ShoppingCart(models.Model):
     def clean(self):
         """Валидация повторной подписки и подписки на свой рецепт."""
         if ShoppingCart.objects.filter(
-            user=self.user,
-            recipe=self.recipe).exists():
+                user=self.user,
+                recipe=self.recipe).exists():
             raise CantSubscribe(
                 {'errors': 'Рецепт уже в корзине'})
-        
+
     def save(self, *args, **kwargs):
         self.full_clean()
         return super(ShoppingCart, self).save(*args, **kwargs)

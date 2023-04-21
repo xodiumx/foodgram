@@ -75,18 +75,18 @@ class Follow(models.Model):
         ]
         verbose_name = ('Подписка')
         verbose_name_plural = ('Подписки')
-    
+
     def clean(self):
         """Валидация повторной подписки и подписки на себя."""
         if self.user == self.following:
             raise CantSubscribe(
                 {'errors': 'Нельзя подписаться на себя'})
-        
+
         if Follow.objects.filter(user=self.user,
                                  following=self.following).exists():
             raise CantSubscribe(
                 {'errors': 'Нельзя подписаться повторно'})
-        
+
     def save(self, *args, **kwargs):
         self.full_clean()
         return super(Follow, self).save(*args, **kwargs)

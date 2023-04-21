@@ -1,16 +1,15 @@
-from django.utils import timezone
-from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import check_password
-
-from rest_framework.serializers import (
-    CharField, EmailField, ModelSerializer, ListSerializer,
-    Serializer, SerializerMethodField)
-
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from rest_framework.serializers import (CharField, EmailField, ListSerializer,
+                                        ModelSerializer, Serializer,
+                                        SerializerMethodField)
 
 from recipes.models import Recipe
-from .models import User, Follow
-from .utils import get_tokens_for_user
+
 from .exceptions import WrongData
+from .models import Follow, User
+from .utils import get_tokens_for_user
 
 
 class InfoSerializer(ModelSerializer):
@@ -21,19 +20,19 @@ class InfoSerializer(ModelSerializer):
         model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', )
-    
+
     def get_is_subscribed(self, follow):
         request = self.context.get('request')
         return Follow.objects.filter(
-            user= None if request.user.is_anonymous else request.user, 
+            user=None if request.user.is_anonymous else request.user,
             following=follow).exists()
 
-    
+
 class SignupSerializer(ModelSerializer):
     """Сериализациия данных регистрации пользователя."""
     class Meta:
         model = User
-        fields = ('email', 'id', 'password', 'username', 'first_name', 
+        fields = ('email', 'id', 'password', 'username', 'first_name',
                   'last_name',)
 
     def create(self, validated_data):
@@ -42,7 +41,7 @@ class SignupSerializer(ModelSerializer):
         user.set_password(user.password)
         user.save()
         return user
-    
+
     def to_representation(self, instance):
         """Убрать пароль из ответа."""
         data = super().to_representation(instance)
@@ -65,7 +64,7 @@ class LoginSerializer(Serializer):
         user.last_login = timezone.now()
         user.save()
         return {'auth_token': get_tokens_for_user(user).get('access')}
-    
+
 
 class ChangePasswordSerializer(Serializer):
     """
@@ -97,7 +96,7 @@ class SubInfoSerializer(ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('email', 'id', 'username', 'first_name', 'last_name', 
+        fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'recipes')
 
     def to_representation(self, instance):
@@ -117,7 +116,7 @@ class SubInfoSerializer(ModelSerializer):
             user=user, following=instance).exists()
         data['recipes_count'] = len(data['recipes'])
         return data
-    
+
 
 class SubscriptionSerializer(ListSerializer):
     """Сериализация всех подписок пользователя."""

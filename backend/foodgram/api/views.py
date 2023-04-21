@@ -1,37 +1,38 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-
 from rest_framework.decorators import action
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    ListModelMixin, RetrieveModelMixin,
                                    UpdateModelMixin)
 from rest_framework.response import Response
-from rest_framework.status import HTTP_201_CREATED, HTTP_204_NO_CONTENT
+from rest_framework.status import (HTTP_201_CREATED, HTTP_204_NO_CONTENT,
+                                   HTTP_405_METHOD_NOT_ALLOWED)
 from rest_framework.viewsets import GenericViewSet
 
-from foodgram.pagination  import PagePaginationWithLimit
+from foodgram.pagination import PagePaginationWithLimit
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import User
-from recipes.models import Tag, Ingredient, Recipe, ShoppingCart, Favorite
-from .serializers import (
-    TagSerializer, IngredientInfoSerializer, RecipeSerializer,
-    RecipeCreateSerializer, RecipeShortSerializer)
+
 from .filters import IngredientFilter, RecipeFilter
-from .permissions import UserIsAuthenticated, IsOwnerOrReadOnly
+from .permissions import IsOwnerOrReadOnly, UserIsAuthenticated
+from .serializers import (IngredientInfoSerializer, RecipeCreateSerializer,
+                          RecipeSerializer, RecipeShortSerializer,
+                          TagSerializer)
 from .utils import get_shopping_cart
 
 
 class TagViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet,):
-    
+
     pagination_class = None
-    http_method_names =('get',)
+    http_method_names = ('get',)
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    
+
 
 class IngredientViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet,):
 
     pagination_class = None
-    http_method_names =('get',)
+    http_method_names = ('get',)
     queryset = Ingredient.objects.all()
     serializer_class = IngredientInfoSerializer
     filter_backends = (DjangoFilterBackend, )
@@ -40,7 +41,7 @@ class IngredientViewSet(ListModelMixin, RetrieveModelMixin, GenericViewSet,):
 
 class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
                     DestroyModelMixin, UpdateModelMixin, GenericViewSet):
-    
+
     queryset = Recipe.objects.prefetch_related(
         'ingredients__amountingredient_set').all()
     pagination_class = PagePaginationWithLimit
@@ -64,7 +65,7 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
         """
         user = get_object_or_404(User, id=request.user.id)
         queryset = ShoppingCart.objects.select_related(
-                                        'recipe').filter(user=user)
+            'recipe').filter(user=user)
         return get_shopping_cart(queryset)
 
     @action(
@@ -86,12 +87,12 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
             serializer = RecipeShortSerializer(
                 recipe, context={'request': request})
             return Response(serializer.data, HTTP_201_CREATED)
-        
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             get_object_or_404(
                 ShoppingCart, user=request.user, recipe_id=id).delete()
             return Response(status=HTTP_204_NO_CONTENT)
-    
+        return Response(status=HTTP_405_METHOD_NOT_ALLOWED)
+
     @action(
         methods=('POST', 'DELETE'),
         detail=False,
@@ -111,17 +112,20 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
             serializer = RecipeShortSerializer(
                 recipe, context={'request': request})
             return Response(serializer.data, HTTP_201_CREATED)
-        
-        elif request.method == 'DELETE':
+        if request.method == 'DELETE':
             get_object_or_404(
                 Favorite, user=request.user, recipe_id=id).delete()
             return Response(status=HTTP_204_NO_CONTENT)
+        return Response(status=HTTP_405_METHOD_NOT_ALLOWED)
 
     def get_serializer_class(self):
-        if self.action in ('favorite', 'download_shopping_cart'): return None
-        elif self.action in ('list', 'retrieve'): return RecipeSerializer
-        elif self.action in ('create', 'partial_update'): 
+        if self.action in ('favorite', 'download_shopping_cart'):
+            return None
+        if self.action in ('list', 'retrieve'):
+            return RecipeSerializer
+        if self.action in ('create', 'partial_update'):
             return RecipeCreateSerializer
+        return None
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
