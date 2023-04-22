@@ -45,7 +45,6 @@ SLIDING_TOKEN_LIFETIME=5
 SLIDING_TOKEN_REFRESH_LIFETIME=1
 
 CORS_ALLOWED_ORIGINS='http://localhost'
-
 ~~~
 - запустите команду:
 ~~~
@@ -180,6 +179,13 @@ python manage.py import_data --delete
   "cooking_time": 30
 }
 ~~~
+
+## Загрузка рецептов
+
+- Пользователь отправляет GET - запрос на эндпоинт `/api/recipes/download_shopping_cart/`
+- В ответе он получает `pdf-file` со списком всех продуктов необходимых для рецептов, 
+  которые он поместил в корзину, количество для одинаковых продуктов суммируется.
+  
 
 #### Более подробная документация доступна по эндпоинту `/api/docs/`
 
