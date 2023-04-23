@@ -1,15 +1,14 @@
 from base64 import b64decode
 
 from django.core.files.base import ContentFile
+from recipes.models import (AmountIngredient, Favorite, Ingredient, Recipe,
+                            ShoppingCart, Tag)
 from rest_framework.serializers import (ImageField, ModelSerializer,
                                         PrimaryKeyRelatedField, ReadOnlyField,
                                         SerializerMethodField)
-
-from recipes.models import (AmountIngredient, Favorite, Ingredient, Recipe,
-                            ShoppingCart, Tag)
 from users.models import Follow, User
 
-from .exceptions import UserIsNotAuth
+from .exceptions import IngredientError, UserIsNotAuth
 
 
 class IngredientInfoSerializer(ModelSerializer):
@@ -60,7 +59,6 @@ class Base64ImageField(ImageField):
     - Из исходной строки извлекаем формат и картинку.
     - Записываем картинку в формате 'recipe.<расширение>.
     """
-
     def to_internal_value(self, data):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
@@ -116,7 +114,19 @@ class RecipeCreateSerializer(ModelSerializer):
         if self.context.get('request').user.is_anonymous:
             raise UserIsNotAuth('Только авторизованные пользователи '
                                 'могут создавать и обновлять контент')
+        
         ingredients = self.initial_data.get('ingredients')
+        uniques = [ingredient.get('id') for ingredient in ingredients]
+
+        if len(uniques) != len(set(uniques)):
+            raise IngredientError({'ingredient': 'Ингредиент уже добавлен'})
+        
+        amounts = [ingredient.get('amount') for ingredient in ingredients
+                   if 0 < ingredient.get('amount') <= 5000]
+        
+        if len(amounts) != len(ingredients):
+            raise IngredientError({'amount': 'количество должно быть '
+                                             'больше 0 и меньше 5000'})
         data['ingredients'] = ingredients
         return data
 
@@ -134,11 +144,12 @@ class RecipeCreateSerializer(ModelSerializer):
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
 
-        for ingredient_data in ingredients_data:
-            AmountIngredient.objects.create(
+        AmountIngredient.objects.bulk_create(
+            [AmountIngredient(
                 recipe=recipe,
                 ingredient_id=ingredient_data.pop('id'),
-                amount=ingredient_data.pop('amount'))
+                amount=ingredient_data.pop('amount')
+            ) for ingredient_data in ingredients_data])
         return recipe
 
     def update(self, instance, validated_data):
@@ -159,11 +170,12 @@ class RecipeCreateSerializer(ModelSerializer):
         instance.tags.set(validated_data.get('tags'))
 
         AmountIngredient.objects.filter(recipe=instance).all().delete()
-        for ingredient_data in validated_data.get('ingredients'):
-            AmountIngredient.objects.create(
+        AmountIngredient.objects.bulk_create(
+            [AmountIngredient(
                 recipe=instance,
                 ingredient_id=ingredient_data.pop('id'),
-                amount=ingredient_data.pop('amount'))
+                amount=ingredient_data.pop('amount')
+            ) for ingredient_data in validated_data.get('ingredients')])
         instance.save()
         return instance
 

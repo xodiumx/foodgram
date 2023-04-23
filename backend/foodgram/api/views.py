@@ -1,20 +1,22 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from rest_framework.decorators import action
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    ListModelMixin, RetrieveModelMixin,
                                    UpdateModelMixin)
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_201_CREATED, HTTP_204_NO_CONTENT,
                                    HTTP_405_METHOD_NOT_ALLOWED)
 from rest_framework.viewsets import GenericViewSet
-
-from foodgram.pagination import PagePaginationWithLimit
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from users.models import User
 
+from foodgram.pagination import PagePaginationWithLimit
+
+from .exceptions import CantAddTwice
 from .filters import IngredientFilter, RecipeFilter
-from .permissions import IsOwnerOrReadOnly, UserIsAuthenticated
+from .permissions import IsOwnerOrReadOnly
 from .serializers import (IngredientInfoSerializer, RecipeCreateSerializer,
                           RecipeSerializer, RecipeShortSerializer,
                           TagSerializer)
@@ -56,7 +58,7 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
         filter_backends=None,
         pagination_class=None,
         url_path='download_shopping_cart',
-        permission_classes=(UserIsAuthenticated,),)
+        permission_classes=(IsAuthenticated,),)
     def download_shopping_cart(self, request):
         """
         Выдаем рецепт в виде pdf-file-a:
@@ -71,51 +73,69 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
     @action(
         methods=('POST', 'DELETE'),
         detail=False,
-        permission_classes=(UserIsAuthenticated,),
+        permission_classes=(IsAuthenticated,),
         url_path='(?P<id>\d+)/shopping_cart',)
     def shopping_cart(self, request, id):
         """
         Action for shopping_cart:
             - Если POST запрос, сериализуем recipe и создаем запись в Shopping
+              если связь создана response - 201_created иначе рейзим ошибку
             - Если DELETE запрос удаляем запись в таблице Shopping по id и user
             - права доступа: авторизованные пользователи
             - доступные методы: POST, DELETE
         """
         if request.method == 'POST':
             recipe = get_object_or_404(Recipe, id=id)
-            ShoppingCart.objects.create(recipe=recipe, user=request.user)
+
+            _, created = ShoppingCart.objects.get_or_create(
+                recipe=recipe, user=request.user)
+            
+            if not created:
+                raise CantAddTwice({'errors': 'Нельзя добавлять повторно'})
+
             serializer = RecipeShortSerializer(
                 recipe, context={'request': request})
             return Response(serializer.data, HTTP_201_CREATED)
+        
         if request.method == 'DELETE':
             get_object_or_404(
                 ShoppingCart, user=request.user, recipe_id=id).delete()
             return Response(status=HTTP_204_NO_CONTENT)
+        
         return Response(status=HTTP_405_METHOD_NOT_ALLOWED)
 
     @action(
         methods=('POST', 'DELETE'),
         detail=False,
-        permission_classes=(UserIsAuthenticated,),
+        permission_classes=(IsAuthenticated,),
         url_path='(?P<id>\d+)/favorite',)
     def favorite(self, request, id):
         """
         Action for subscribing:
             - Если POST запрос, сериализуем recipe и создаем запись в Favorite
+              если связь создана response - 201_created иначе рейзим ошибку
             - Если DELETE запрос удаляем запись в таблице Favorite по id и user
             - права доступа: авторизованные пользователи
             - доступные методы: POST, DELETE
         """
         if request.method == 'POST':
             recipe = get_object_or_404(Recipe, id=id)
-            Favorite.objects.create(recipe=recipe, user=request.user)
+
+            _, created = Favorite.objects.get_or_create(
+                recipe=recipe, user=request.user)
+            
+            if not created:
+                raise CantAddTwice({'errors': 'Нельзя добавлять повторно'})
+            
             serializer = RecipeShortSerializer(
                 recipe, context={'request': request})
             return Response(serializer.data, HTTP_201_CREATED)
+        
         if request.method == 'DELETE':
             get_object_or_404(
                 Favorite, user=request.user, recipe_id=id).delete()
             return Response(status=HTTP_204_NO_CONTENT)
+
         return Response(status=HTTP_405_METHOD_NOT_ALLOWED)
 
     def get_serializer_class(self):

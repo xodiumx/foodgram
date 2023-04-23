@@ -17,7 +17,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from foodgram.pagination import PagePaginationWithLimit
 
-from .exceptions import UserIsNotAuthenticated
+from .exceptions import CantSubscribe, UserIsNotAuthenticated
 from .models import Follow, User
 from .permissions import UserIsAuthenticated
 from .serializers import (ChangePasswordSerializer, InfoSerializer,
@@ -88,7 +88,9 @@ class UserViewSet(CreateModelMixin,
         Action for subscribing:
             - Если POST запрос берем пользователя на которого подписываемся
               по id из url-a.
+              Если current_user == followin рейзим ошибку
               Создаем запись в таблице Follow.
+              Если запись о подписке уже создана рейзим ошибку
               Передаем объект following в сериализатор - SubInfoSerializer.
 
             - Если DELETE запрос берем объект из таблицы Follow,
@@ -101,14 +103,23 @@ class UserViewSet(CreateModelMixin,
         following = get_object_or_404(User, id=id)
 
         if request.method == 'POST':
-            Follow.objects.create(user=current_user, following=following)
+            if current_user == following:
+                raise CantSubscribe({'errors': 'Нельзя подписаться на себя'})
+            
+            _, created = Follow.objects.get_or_create(
+                user=current_user, following=following)
+            if not created:
+                raise CantSubscribe({'errors': 'Нельзя подписаться повторно'})
+            
             serializer = SubInfoSerializer(following,
                                            context={'request': request})
             return Response(serializer.data, HTTP_201_CREATED)
+        
         if request.method == 'DELETE':
             get_object_or_404(
                 Follow, user=current_user, following=following).delete()
             return Response(status=HTTP_204_NO_CONTENT)
+        
         return Response(status=HTTP_405_METHOD_NOT_ALLOWED)
 
     @swagger_auto_schema(

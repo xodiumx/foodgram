@@ -1,9 +1,6 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-
 from users.models import User
-
-from .exceptions import CantSubscribe, NotUniqueIngredient
 
 
 class Tag(models.Model):
@@ -124,7 +121,10 @@ class Recipe(models.Model):
         through='RecipeTag',)
     cooking_time = models.IntegerField(
         'Время приготовления',
-        validators=(MaxValueValidator(500), MinValueValidator(1)),
+        validators=(
+            MaxValueValidator(500, message='Максимальное количесвто 500 мин.'),
+            MinValueValidator(1, message='Минимальное количесвто 1 минута')
+        ),
         null=False,
         blank=False
     )
@@ -148,30 +148,25 @@ class AmountIngredient(models.Model):
     """
     ingredient = models.ForeignKey(Ingredient, on_delete=models.PROTECT)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
-    amount = models.IntegerField('Количество', default=1, )
+    amount = models.IntegerField(
+        'Количество',
+        default=1,
+        validators=(
+            MinValueValidator(1, message='Минимальное количесвто 1'),
+            MaxValueValidator(5000, message='Максимальное количество 5000')
+        )
+    )
 
     class Meta:
         verbose_name = 'Количество ингредента'
         verbose_name_plural = 'Количество ингредентов'
-
-    def clean(self):
-        """
-        - Валидация повторного добавления ингредиента
-        - Количество должно быть в рамках 0 - 600
-        """
-        if AmountIngredient.objects.filter(
-                ingredient=self.ingredient,
-                recipe=self.recipe).exists():
-            raise NotUniqueIngredient(
-                {'detail': 'Повторное добавление ингредиента'})
-
-        if not 0 < self.amount < 5000:
-            raise NotUniqueIngredient(
-                {'detail': 'Максимальное количество 0 - 5000'})
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super(AmountIngredient, self).save(*args, **kwargs)
+        constraints = [
+            models.UniqueConstraint(
+                fields=('recipe', 'ingredient'),
+                name='unique_recipe_ingredient',
+                violation_error_message='Повторное добавление ингредиента',
+            )
+        ]
 
 
 class RecipeTag(models.Model):
@@ -201,6 +196,8 @@ class Favorite(models.Model):
 
     class Meta:
         ordering = ('-id',)
+        verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранные'
         constraints = [
             models.UniqueConstraint(
                 fields=('recipe', 'user'),
@@ -208,25 +205,7 @@ class Favorite(models.Model):
                 violation_error_message='Повторная подписка',
             )
         ]
-        verbose_name = 'Избранное'
-        verbose_name_plural = 'Избранные'
-
-    def clean(self):
-        """Валидация повторной подписки и подписки на свой рецепт."""
-        if self.user == self.recipe.author:
-            raise CantSubscribe(
-                {'errors': 'Нельзя подписаться на свой рецепт'})
-
-        if Favorite.objects.filter(
-                user=self.user,
-                recipe=self.recipe).exists():
-            raise CantSubscribe(
-                {'errors': 'Нельзя подписаться повторно'})
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super(Favorite, self).save(*args, **kwargs)
-
+    
 
 class ShoppingCart(models.Model):
     """
@@ -249,15 +228,3 @@ class ShoppingCart(models.Model):
         ]
         verbose_name = 'Корзина'
         verbose_name_plural = 'Корзины'
-
-    def clean(self):
-        """Валидация повторной подписки и подписки на свой рецепт."""
-        if ShoppingCart.objects.filter(
-                user=self.user,
-                recipe=self.recipe).exists():
-            raise CantSubscribe(
-                {'errors': 'Рецепт уже в корзине'})
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super(ShoppingCart, self).save(*args, **kwargs)

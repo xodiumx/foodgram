@@ -1,6 +1,5 @@
 from django.db.models import Count, Q
 from django_filters import rest_framework as filter
-
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart
 
 
@@ -53,16 +52,16 @@ class RecipeFilter(filter.FilterSet):
         """Фильтруем по id рецепта привязанного к пользователю."""
         user = self.request.user
         if not user.is_anonymous and value:
-            ids = [qs.recipe.id for qs in Favorite.objects.filter(
-                   user=user)]
+            ids = Favorite.objects.filter(
+                user=user).values_list('recipe_id', flat=True)
             return queryset.filter(id__in=ids)
-        return queryset
+        return queryset.none()
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         """Фильтруем по id рецепта привязанного к пользователю."""
         user = self.request.user
         if not user.is_anonymous and value:
-            ids = [qs.recipe.id for qs in ShoppingCart.objects.filter(
-                   user=user)]
+            ids = ShoppingCart.objects.filter(
+                user=user).values_list('recipe_id', flat=True)
             return queryset.filter(id__in=ids)
-        return queryset
+        return queryset.none()

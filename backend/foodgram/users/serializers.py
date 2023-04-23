@@ -1,11 +1,10 @@
 from django.contrib.auth.hashers import check_password
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from recipes.models import Recipe
 from rest_framework.serializers import (CharField, EmailField, ListSerializer,
                                         ModelSerializer, Serializer,
                                         SerializerMethodField)
-
-from recipes.models import Recipe
 
 from .exceptions import WrongData
 from .models import Follow, User
@@ -34,6 +33,17 @@ class SignupSerializer(ModelSerializer):
         model = User
         fields = ('email', 'id', 'password', 'username', 'first_name',
                   'last_name',)
+
+    def validate(self, data):
+        """
+        - Если username - 'me' рейзим ошибку
+        - приводим username и email к lowercase
+        """
+        if data.get('username') == 'me':
+            raise WrongData({'username': 'username "me" запрещен.'})
+        data['username'] = data.get('username').lower()
+        data['email'] = data.get('email').lower()
+        return data
 
     def create(self, validated_data):
         """Хешируем пароль через set_password."""
