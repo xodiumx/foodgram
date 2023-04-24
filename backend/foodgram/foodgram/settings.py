@@ -10,7 +10,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY', 'fsgdadsfae#^F#&RFG$&#FG@daasd')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -131,19 +131,19 @@ REST_FRAMEWORK = {
 
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
-CELERY_TASK_TRACK_STARTED = bool(os.getenv('CELERY_TASK_TRACK_STARTED'))
-CELERY_TASK_TIME_LIMIT = int(os.getenv('CELERY_TASK_TIME_LIMIT'))
+CELERY_TASK_TRACK_STARTED = bool(os.getenv('CELERY_TASK_TRACK_STARTED', True))
+CELERY_TASK_TIME_LIMIT = int(os.getenv('CELERY_TASK_TIME_LIMIT', 1))
 
 # JWT
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=int(os.getenv('ACCESS_TOKEN_LIFETIME'))),
-    'REFRESH_TOKEN_LIFETIME': timedelta(hours=int(os.getenv('REFRESH_TOKEN_LIFETIME'))),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=int(os.getenv('ACCESS_TOKEN_LIFETIME', 1))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=int(os.getenv('REFRESH_TOKEN_LIFETIME', 1))),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
 
-    'ALGORITHM': os.getenv('ALGORITHM'),
+    'ALGORITHM': os.getenv('ALGORITHM', 'HS256'),
     'SIGNING_KEY': SECRET_KEY,
     'VERIFYING_KEY': None,
     'AUDIENCE': None,
@@ -164,8 +164,8 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('SLIDING_TOKEN_LIFETIME'))),
-    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=int(os.getenv('SLIDING_TOKEN_REFRESH_LIFETIME'))),
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('SLIDING_TOKEN_LIFETIME', 1))),
+    'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=int(os.getenv('SLIDING_TOKEN_REFRESH_LIFETIME', 1))),
 }
 
 # Swagger settings
