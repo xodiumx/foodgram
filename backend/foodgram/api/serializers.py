@@ -1,12 +1,11 @@
 from base64 import b64decode
 
 from django.core.files.base import ContentFile
+from recipes.models import (MAX_OF_AMOUNT, MIN_OF_AMOUNT, AmountIngredient,
+                            Favorite, Ingredient, Recipe, ShoppingCart, Tag)
 from rest_framework.serializers import (ImageField, ModelSerializer,
                                         PrimaryKeyRelatedField, ReadOnlyField,
                                         SerializerMethodField)
-
-from recipes.models import (MAX_OF_AMOUNT, MIN_OF_AMOUNT, AmountIngredient,
-                            Favorite, Ingredient, Recipe, ShoppingCart, Tag)
 from users.models import Follow, User
 
 from .exceptions import IngredientError

@@ -1,11 +1,10 @@
 from django.contrib.auth.hashers import check_password
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from recipes.models import Recipe
 from rest_framework.serializers import (CharField, EmailField, ListSerializer,
                                         ModelSerializer, Serializer,
                                         SerializerMethodField)
-
-from recipes.models import Recipe
 
 from .exceptions import WrongData
 from .models import Follow, User
