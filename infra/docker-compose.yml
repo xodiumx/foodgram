@@ -21,7 +21,7 @@ services:
   backend:
     container_name: back
     build: ../backend/foodgram
-    image: oxdium/foodgram:latest
+    image: oxdium/foodgram_backend:latest
     restart: always
     depends_on:
       - db
@@ -34,9 +34,8 @@ services:
 
   frontend:
     container_name: front
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    build: ../frontend
+    image: oxdium/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
 
@@ -64,6 +63,8 @@ services:
       - redis
       - backend
     command: celery -A foodgram worker --loglevel=info -P eventlet
+    env_file:
+      - ./.env
 
   celery-beat:
     container_name: celery-beat
@@ -74,6 +75,8 @@ services:
       - redis
       - backend
     command: celery -A foodgram beat -l info
+    env_file:
+      - ./.env
 
   celery-flower:
     container_name: celery-flower
