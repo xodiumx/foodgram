@@ -11,7 +11,12 @@ services:
     ports:
       - '5432:5432'
 
-  # TODO: add celery
+  redis:
+    container_name: redis
+    image: redis
+    command: redis-server
+    ports:
+      - '6379:6379'
 
   backend:
     container_name: back
@@ -20,6 +25,7 @@ services:
     restart: always
     depends_on:
       - db
+      - redis
     volumes:
       - static_volume:/app/static/
       - media_volume:/app/media/
@@ -49,14 +55,42 @@ services:
       - backend
       - frontend
 
-  redis:
-    container_name: redis
-    image: redis
-    command: redis-server
+  celery-worker:
+    container_name: celery-worker
+    image: oxdium/foodgram:latest
+    volumes:
+      - celery_volume:/usr/src/app/
+    depends_on:
+      - redis
+      - backend
+    command: celery -A foodgram worker --loglevel=info -P eventlet
+
+  celery-beat:
+    container_name: celery-beat
+    image: oxdium/foodgram:latest
+    volumes:
+      - celery_volume:/usr/src/app/
+    depends_on:
+      - redis
+      - backend
+    command: celery -A foodgram beat -l info
+
+  celery-flower:
+    container_name: celery-flower
+    image: oxdium/foodgram:latest
+    volumes:
+      - celery_volume:/usr/src/app/
+    depends_on:
+      - redis
+      - backend
     ports:
-      - '14000:6379'
+      - 5555:5555
+    command: celery -A foodgram flower worker --url_prefix=flower --basic_auth=${FLOWER_USER}:${FLOWER_PASSWORD}
+    env_file:
+      - ./.env
 
 volumes:
   db_volume:
   static_volume:
   media_volume:
+  celery_volume:
