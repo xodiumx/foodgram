@@ -1,6 +1,5 @@
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
 from rest_framework.decorators import action
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    ListModelMixin, RetrieveModelMixin,
@@ -10,13 +9,14 @@ from rest_framework.response import Response
 from rest_framework.status import (HTTP_201_CREATED, HTTP_204_NO_CONTENT,
                                    HTTP_405_METHOD_NOT_ALLOWED)
 from rest_framework.viewsets import GenericViewSet
-from users.models import User
 
 from foodgram.pagination import PagePaginationWithLimit
+from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart, Tag
+from users.models import User
 
 from .exceptions import CantAddTwice
 from .filters import IngredientFilter, RecipeFilter
-from .permissions import IsOwnerOrReadOnly
+from .permissions import IsAuthorAndAuthenticatedOrReadOnly
 from .serializers import (IngredientInfoSerializer, RecipeCreateSerializer,
                           RecipeSerializer, RecipeShortSerializer,
                           TagSerializer)
@@ -50,7 +50,7 @@ class RecipeViewSet(ListModelMixin, RetrieveModelMixin, CreateModelMixin,
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     http_method_names = ('get', 'post', 'patch', 'delete')
-    permission_classes = (IsOwnerOrReadOnly,)
+    permission_classes = (IsAuthorAndAuthenticatedOrReadOnly,)
 
     @action(
         methods=('GET',),

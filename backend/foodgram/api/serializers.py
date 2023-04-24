@@ -1,14 +1,15 @@
 from base64 import b64decode
 
 from django.core.files.base import ContentFile
-from recipes.models import (AmountIngredient, Favorite, Ingredient, Recipe,
-                            ShoppingCart, Tag)
 from rest_framework.serializers import (ImageField, ModelSerializer,
                                         PrimaryKeyRelatedField, ReadOnlyField,
                                         SerializerMethodField)
+
+from recipes.models import (MAX_OF_AMOUNT, MIN_OF_AMOUNT, AmountIngredient,
+                            Favorite, Ingredient, Recipe, ShoppingCart, Tag)
 from users.models import Follow, User
 
-from .exceptions import IngredientError, UserIsNotAuth
+from .exceptions import IngredientError
 
 
 class IngredientInfoSerializer(ModelSerializer):
@@ -111,22 +112,19 @@ class RecipeCreateSerializer(ModelSerializer):
         В data записываем ingredient-ы так как они сериализуются
         только для чтения.
         """
-        if self.context.get('request').user.is_anonymous:
-            raise UserIsNotAuth('Только авторизованные пользователи '
-                                'могут создавать и обновлять контент')
-        
         ingredients = self.initial_data.get('ingredients')
-        uniques = [ingredient.get('id') for ingredient in ingredients]
+        ingredient_ids = [ingredient.get('id') for ingredient in ingredients]
 
-        if len(uniques) != len(set(uniques)):
+        if len(ingredient_ids) != len(set(ingredient_ids)):
             raise IngredientError({'ingredient': 'Ингредиент уже добавлен'})
         
-        amounts = [ingredient.get('amount') for ingredient in ingredients
-                   if 0 < ingredient.get('amount') <= 5000]
+        amounts = [ingred.get('amount') for ingred in ingredients
+                   if MIN_OF_AMOUNT <= ingred.get('amount') <= MAX_OF_AMOUNT]
         
         if len(amounts) != len(ingredients):
-            raise IngredientError({'amount': 'количество должно быть '
-                                             'больше 0 и меньше 5000'})
+            raise IngredientError(
+                {'amount': 'количество должно быть '
+                 f'больше {MIN_OF_AMOUNT} и меньше {MAX_OF_AMOUNT}'})
         data['ingredients'] = ingredients
         return data
 

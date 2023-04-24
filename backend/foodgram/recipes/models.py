@@ -1,6 +1,15 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+
 from users.models import User
+
+MIN_OF_AMOUNT = 1
+MAX_OF_AMOUNT = 5000
+MIN_OF_COOKING_TIME = 1
+MAX_OF_COOKING_TIME = 500
+MAX_LENGTH_OF_DESCRIPTION = 2000
+LENGTH_OF_RECIPE_NAME = 120
+LENGTH_OF_INGREDIENT_NAME = 120
 
 
 class Tag(models.Model):
@@ -46,7 +55,7 @@ class Ingredient(models.Model):
     """
     name = models.CharField(
         'Ингредиент',
-        max_length=120,
+        max_length=LENGTH_OF_INGREDIENT_NAME,
         db_index=True,
         null=False,
         blank=False)
@@ -90,7 +99,7 @@ class Recipe(models.Model):
     )
     name = models.CharField(
         'Название рецепта',
-        max_length=120,
+        max_length=LENGTH_OF_RECIPE_NAME,
         db_index=True,
         null=False,
         blank=False
@@ -103,7 +112,7 @@ class Recipe(models.Model):
     )
     text = models.TextField(
         'Описание',
-        max_length=2000,
+        max_length=MAX_LENGTH_OF_DESCRIPTION,
         null=False,
         blank=False
     )
@@ -122,8 +131,12 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField(
         'Время приготовления',
         validators=(
-            MaxValueValidator(500, message='Максимальное количесвто 500 мин.'),
-            MinValueValidator(1, message='Минимальное количесвто 1 минута')
+            MaxValueValidator(
+                MAX_OF_COOKING_TIME,
+                message=f'Максимальное количесвто {MAX_OF_COOKING_TIME} мин.'),
+            MinValueValidator(
+                MIN_OF_COOKING_TIME,
+                message=f'Минимальное количесвто {MIN_OF_COOKING_TIME} минута')
         ),
         null=False,
         blank=False
@@ -152,8 +165,12 @@ class AmountIngredient(models.Model):
         'Количество',
         default=1,
         validators=(
-            MinValueValidator(1, message='Минимальное количесвто 1'),
-            MaxValueValidator(5000, message='Максимальное количество 5000')
+            MinValueValidator(
+                MIN_OF_AMOUNT,
+                message=f'Минимальное количесвто {MIN_OF_AMOUNT}'),
+            MaxValueValidator(
+                MAX_OF_AMOUNT,
+                message=f'Максимальное количество {MAX_OF_AMOUNT}')
         )
     )
 
