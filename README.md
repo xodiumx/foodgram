@@ -1,6 +1,6 @@
 # Foodgram
 
-![WorkflowBadge](https://github.com/xodiumx/foodgram/actions/workflows/foodgram_workflow.yml/badge.svg)
+![WorkflowBadge](https://github.com/xodiumx/foodgram/actions/workflows/deploy_workflow.yml/badge.svg)
 
 ![Python](https://img.shields.io/badge/python-201933?style=for-the-badge&logo=python&logoColor=white) ![Celery](https://img.shields.io/badge/celery-201933?style=for-the-badge&logo=python&logoColor=white) ![Swagger](https://img.shields.io/badge/swagger-201933?style=for-the-badge&logo=python&logoColor=white) ![Redoc](https://img.shields.io/badge/redoc-201933?style=for-the-badge&logo=python&logoColor=white) ![PEP8](https://img.shields.io/badge/pep8-201933?style=for-the-badge&logo=python&logoColor=white) ![DjangoREST](https://img.shields.io/badge/DJANGO-REST-000000?style=for-the-badge&logo=django&logoColor=white&color=201933&labelColor=black) ![Postgres](https://img.shields.io/badge/postgresql-201933?style=for-the-badge&logo=postgresql&logoColor=white) ![Redis](https://img.shields.io/badge/redis-201933?style=for-the-badge&logo=redis&logoColor=white) ![Ubuntu](https://img.shields.io/badge/Ubuntu-201933?style=for-the-badge&logo=ubuntu&logoColor=white) ![Nginx](https://img.shields.io/badge/nginx-201933?style=for-the-badge&logo=nginx&logoColor=white) ![Docker](https://img.shields.io/badge/docker-201933?style=for-the-badge&logo=docker&logoColor=white) 
 
@@ -191,5 +191,6 @@ python manage.py import_data --delete
   
 
 #### Более подробная документация доступна по эндпоинту `/api/docs/`
+#### [IP of project](http://51.250.67.46/signin)
 
 ## Author - [Alekseev Maksim](https://t.me/maxalxeev)
