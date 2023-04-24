@@ -108,8 +108,7 @@ jobs:
           script: |
             sudo docker-compose stop
             sudo docker-compose rm web
-            sudo docker-compose rm oxdium/foodgram_backend:latest
-            sudo docker-compose rm oxdium/foodgram_frontend:latest
+            sudo docker-compose pull
             touch .env
             echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
             echo DB_ENGINE=${{ secrets.DB_ENGINE }} >> .env
