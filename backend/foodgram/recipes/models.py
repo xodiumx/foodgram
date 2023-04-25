@@ -207,7 +207,8 @@ class Favorite(models.Model):
         - user: FK to User model
         - recipe: FK to Recipe model
     """
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
+                               related_name='favorites')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     class Meta:

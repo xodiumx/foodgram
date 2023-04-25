@@ -37,10 +37,13 @@ class IngredientAdmin(ModelAdmin):
 @register(Recipe)
 class RecipeAdmin(ModelAdmin):
     inlines = (TagInline, IngredientInline,)
-    list_display = ('name', )
+    list_display = ('name', 'favorite_count')
     search_fields = ('name',)
     list_filter = ('name',)
     empty_value_display = '-пусто-'
+
+    def favorite_count(self, obj):
+        return obj.favorites.count()
 
 
 @register(AmountIngredient)

@@ -117,8 +117,8 @@ class RecipeCreateSerializer(ModelSerializer):
         if len(ingredient_ids) != len(set(ingredient_ids)):
             raise IngredientError({'ingredient': 'Ингредиент уже добавлен'})
         
-        amounts = [ingred.get('amount') for ingred in ingredients
-                   if MIN_OF_AMOUNT <= ingred.get('amount') <= MAX_OF_AMOUNT]
+        amounts = [ing.get('amount') for ing in ingredients
+                   if MIN_OF_AMOUNT <= int(ing.get('amount')) <= MAX_OF_AMOUNT]
         
         if len(amounts) != len(ingredients):
             raise IngredientError(
