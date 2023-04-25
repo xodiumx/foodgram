@@ -191,6 +191,6 @@ python manage.py import_data --delete
   
 
 #### Более подробная документация доступна по эндпоинту `/api/docs/`
-#### [IP of project](http://51.250.67.46/signin)
+#### [IP of project](http://158.160.41.247/signin)
 
 ## Author - [Alekseev Maksim](https://t.me/maxalxeev)
