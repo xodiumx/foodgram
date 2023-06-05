@@ -1,5 +1,7 @@
 from django.db.models import Count, Q
+from django.db.models.query import QuerySet
 from django_filters import rest_framework as filter
+
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart
 
 
@@ -36,7 +38,10 @@ class RecipeFilter(filter.FilterSet):
         model = Recipe
         fields = ('author', 'tags', 'is_favorited', 'is_in_shopping_cart', )
 
-    def filter_tags(self, queryset, name, value):
+    def filter_tags(
+            self,
+            queryset: QuerySet,
+            name: str, value: str) -> QuerySet:
         """
         Создаем список slug-ов по которым необходима фильтрация.
         К каждому объекту queryset-а анотируем колличество slug-ов в поле tag.
@@ -48,7 +53,10 @@ class RecipeFilter(filter.FilterSet):
             filter=Q(tags__slug__in=tags),
             distinct=True)).filter(num_tags=len(tags), tags__slug__in=tags)
 
-    def filter_is_favorited(self, queryset, name, value):
+    def filter_is_favorited(
+            self,
+            queryset: QuerySet,
+            name: str, value: bool) -> QuerySet:
         """Фильтруем по id рецепта привязанного к пользователю."""
         user = self.request.user
         if not user.is_anonymous and value:
@@ -57,7 +65,10 @@ class RecipeFilter(filter.FilterSet):
             return queryset.filter(id__in=ids)
         return queryset.none()
 
-    def filter_is_in_shopping_cart(self, queryset, name, value):
+    def filter_is_in_shopping_cart(
+            self,
+            queryset: QuerySet,
+            name: str, value: bool) -> QuerySet:
         """Фильтруем по id рецепта привязанного к пользователю."""
         user = self.request.user
         if not user.is_anonymous and value:

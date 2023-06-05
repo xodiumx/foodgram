@@ -1,12 +1,13 @@
 import os
 
+from django.db.models.query import QuerySet
 from django.http import HttpResponse
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen.canvas import Canvas
 
 
-def get_shopping_cart(queryset):
+def get_shopping_cart(queryset: QuerySet) -> HttpResponse:
     """
     Функция для создания pdf файла ингредиентов для покупки.
         - Создаем список data со всеми ингредиентами.
