@@ -5,7 +5,7 @@ from foodgram.celery import app
 
 
 @app.task
-def delete_expired_tokens():
+def delete_expired_tokens() -> str:
     """
     Функция удаления истекших refresh токенов, запускается в полночь.
     """

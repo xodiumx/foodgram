@@ -1,14 +1,12 @@
-from django.contrib.auth.hashers import check_password
-from django.shortcuts import get_object_or_404
-from django.utils import timezone
+from collections import OrderedDict
+
 from recipes.models import Recipe
 from rest_framework.serializers import (CharField, EmailField, ListSerializer,
                                         ModelSerializer, Serializer,
                                         SerializerMethodField)
 
-from .exceptions import WrongData
 from .models import Follow, User
-from .utils import get_tokens_for_user
+from .services import UserService
 
 
 class InfoSerializer(ModelSerializer):
@@ -20,11 +18,9 @@ class InfoSerializer(ModelSerializer):
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', )
 
-    def get_is_subscribed(self, follow):
+    def get_is_subscribed(self, obj: Follow) -> bool:
         request = self.context.get('request')
-        return Follow.objects.filter(
-            user=None if request.user.is_anonymous else request.user,
-            following=follow).exists()
+        return UserService.is_subscribed(self, obj, request)
 
 
 class SignupSerializer(ModelSerializer):
@@ -34,25 +30,13 @@ class SignupSerializer(ModelSerializer):
         fields = ('email', 'id', 'password', 'username', 'first_name',
                   'last_name',)
 
-    def validate(self, data):
-        """
-        - Если username - 'me' рейзим ошибку
-        - приводим username и email к lowercase
-        """
-        if data.get('username') == 'me':
-            raise WrongData({'username': 'username "me" запрещен.'})
-        data['username'] = data.get('username').lower()
-        data['email'] = data.get('email').lower()
-        return data
+    def validate(self, data: OrderedDict) -> OrderedDict:
+        return UserService.validate_signup(self, data)
 
-    def create(self, validated_data):
-        """Хешируем пароль через set_password."""
-        user = User.objects.create(**validated_data)
-        user.set_password(user.password)
-        user.save()
-        return user
+    def create(self, validated_data: dict) -> User:
+        return UserService.create_user(self, validated_data)
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: User) -> OrderedDict:
         """Убрать пароль из ответа."""
         data = super().to_representation(instance)
         data.pop('password')
@@ -67,13 +51,8 @@ class LoginSerializer(Serializer):
     email = EmailField(max_length=254)
     password = CharField(max_length=64)
 
-    def validate(self, data):
-        user = get_object_or_404(User, email=data.get('email'))
-        if not check_password(data.get('password'), user.password):
-            raise WrongData('Введены не правильные данные')
-        user.last_login = timezone.now()
-        user.save()
-        return {'auth_token': get_tokens_for_user(user).get('access')}
+    def validate(self, data: OrderedDict) -> dict:
+        return UserService.validate_login(self, data)
 
 
 class ChangePasswordSerializer(Serializer):
@@ -84,13 +63,8 @@ class ChangePasswordSerializer(Serializer):
     new_password = CharField(max_length=64)
     current_password = CharField(max_length=64)
 
-    def validate(self, data):
-        user = get_object_or_404(User, username=self._args[0])
-        if not check_password(data.get('current_password'), user.password):
-            raise WrongData('Введен не правильный пароль')
-        user.set_password(data.get('new_password'))
-        user.save()
-        return data
+    def validate(self, data: OrderedDict) -> OrderedDict:
+        return UserService.validate_password(self, data)
 
 
 class RecipeInfoSerializer(ModelSerializer):
@@ -109,7 +83,7 @@ class SubInfoSerializer(ModelSerializer):
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'recipes')
 
-    def to_representation(self, instance):
+    def to_representation(self, instance: User) -> OrderedDict:
         """
         Добавляем поля is_subscribed, recipes_count в запрос и ограничиваем
         вывод рецептов исходя из переданного лимита.

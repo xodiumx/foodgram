@@ -5,6 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.mixins import (CreateModelMixin, ListModelMixin,
                                    RetrieveModelMixin)
 from rest_framework.permissions import AllowAny
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
                                    HTTP_204_NO_CONTENT,
@@ -43,7 +44,7 @@ class UserViewSet(CreateModelMixin,
         pagination_class=None,
         filter_backends=None,
         url_path='me',)
-    def me(self, request):
+    def me(self, request: Request) -> Response:
         """
         Action for take info about your profile:
             - Права доступа: авторизованные пользователи.
@@ -57,7 +58,7 @@ class UserViewSet(CreateModelMixin,
         detail=False,
         permission_classes=(UserIsAuthenticated,),
         url_path='set_password',)
-    def set_password(self, request):
+    def set_password(self, request: Request) -> Response:
         """
         Action for change password:
             - Права доступа: авторизованные пользователи.
@@ -83,7 +84,7 @@ class UserViewSet(CreateModelMixin,
         methods=('POST', 'DELETE'),
         url_path='(?P<id>\d+)/subscribe',
         permission_classes=(UserIsAuthenticated, ),)
-    def subscribe(self, request, id):
+    def subscribe(self, request: Request, id: str) -> Response:
         """
         Action for subscribing:
             - Если POST запрос берем пользователя на которого подписываемся
@@ -138,7 +139,7 @@ class UserViewSet(CreateModelMixin,
         methods=('GET',),
         url_path='subscriptions',
         permission_classes=(UserIsAuthenticated,),)
-    def subscriptions(self, request):
+    def subscriptions(self, request: Request) -> Response:
         """
         Action for get subscriptions:
             - Получаем список id на которых подписан пользователь.
@@ -183,7 +184,7 @@ class LoginViewset(TokenObtainPairView):
     http_method_names = ('post',)
     serializer_class = LoginSerializer
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data,
@@ -202,7 +203,7 @@ class LogoutViewset(APIView):
     http_method_names = ('post',)
     permission_classes = (UserIsAuthenticated,)
 
-    def post(self, request):
+    def post(self, request: Request) -> Response:
         tokens = get_list_or_404(OutstandingToken, user_id=request.user.id)
         refresh_token = RefreshToken(tokens[-1].token)
         refresh_token.blacklist()

@@ -2,12 +2,11 @@ from base64 import b64decode
 from collections import OrderedDict
 
 from django.core.files.base import ContentFile
+from recipes.models import (AmountIngredient, Favorite, Ingredient, Recipe,
+                            ShoppingCart, Tag)
 from rest_framework.serializers import (ImageField, ModelSerializer,
                                         PrimaryKeyRelatedField, ReadOnlyField,
                                         SerializerMethodField)
-
-from recipes.models import (AmountIngredient, Favorite, Ingredient, Recipe,
-                            ShoppingCart, Tag)
 from users.models import Follow, User
 
 from .services import RecipeSerivce

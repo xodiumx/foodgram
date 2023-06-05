@@ -1,7 +1,6 @@
 from django.db.models import Count, Q
 from django.db.models.query import QuerySet
 from django_filters import rest_framework as filter
-
 from recipes.models import Favorite, Ingredient, Recipe, ShoppingCart
 
 
